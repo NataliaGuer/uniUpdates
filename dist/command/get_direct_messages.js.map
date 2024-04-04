@@ -1,1 +1,0 @@
-{"version":3,"file":"get_direct_messages.js","sourceRoot":"","sources":["../../src/command/get_direct_messages.ts"],"names":[],"mappings":";;;AAEA,iCAAyE;AAEzE,MAAa,+BAAgC,SAAQ,yBAAkB;IAMnE,MAAM,CAAC,GAAgB;QACnB,MAAM,IAAI,KAAK,CAAC,yBAAyB,CAAC,CAAC;IAC/C,CAAC;CAIJ;AAZD,0EAYC"}
