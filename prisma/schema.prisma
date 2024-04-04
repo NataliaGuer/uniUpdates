@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model attendance {
+  student                             String @db.VarChar(100)
+  course                              Int
+  student_attendance_studentTostudent user   @relation("attendance_studentTostudent", fields: [student], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "attendance_FK")
+  course_attendance_courseTocourse    course @relation("attendance_courseTocourse", fields: [course], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "attendance_FK_1")
+
+  @@id([student, course])
+  @@index([course], map: "attendance_FK_1")
+}
+
+model course {
+  id         Int          @id @default(autoincrement())
+  building   String       @db.VarChar(100)
+  start_date DateTime?    @db.Date
+  end_date   DateTime?    @db.Date
+  name       String?      @db.VarChar(100)
+  attendance attendance[] @relation("attendance_courseTocourse")
+  lessons    lesson[]     @relation("lesson_courseTocourse")
+  teaching   teaching[]   @relation("teaching_courseTocourse")
+}
+
+model lesson {
+  id                           Int     @id @default(autoincrement())
+  course                       Int
+  room                         String  @db.VarChar(50)
+  weekdate                     Int?
+  start_time                   String? @db.VarChar(16)
+  end_time                     String? @db.VarChar(16)
+  course_lesson_courseTocourse course  @relation("lesson_courseTocourse", fields: [course], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "lesson_FK")
+
+  @@index([course], map: "lesson_FK")
+}
+
+model teaching {
+  teacher_id                     String @db.VarChar(100)
+  course                         Int
+  user                           user   @relation(fields: [teacher_id], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "teaching_FK")
+  course_teaching_courseTocourse course @relation("teaching_courseTocourse", fields: [course], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "teaching_FK_1")
+
+  @@id([teacher_id, course])
+  @@index([course], map: "teaching_FK_1")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model sent_messages {
+  id                            Int       @id @default(autoincrement())
+  to                            String    @db.VarChar(100)
+  from                          String    @db.VarChar(100)
+  text                          String    @db.VarChar(250)
+  status                        Int       @default(0)
+  sent_date                     DateTime  @default(now()) @db.Timestamp(0)
+  last_view_date                DateTime? @db.Timestamp(0)
+  type                          Int?
+  user_sent_messages_fromTouser user      @relation("sent_messages_fromTouser", fields: [from], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK")
+  user_sent_messages_toTouser   user      @relation("sent_messages_toTouser", fields: [to], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK_1")
+
+  @@index([from], map: "sent_messages_FK")
+  @@index([to], map: "sent_messages_FK_1")
+}
+
+model user {
+  email                                  String          @id @db.VarChar(100)
+  chat_id                                String?         @unique(map: "user_unique") @db.VarChar(50)
+  role                                   Int?
+  name                                   String?         @db.VarChar(100)
+  attendance                             attendance[]    @relation("attendance_studentTostudent")
+  sent_messages_sent_messages_fromTouser sent_messages[] @relation("sent_messages_fromTouser")
+  sent_messages_sent_messages_toTouser   sent_messages[] @relation("sent_messages_toTouser")
+  teaching                               teaching[]
+  chat                                   chat?           @relation(fields: [chat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_FK_1")
+
+  @@index([role], map: "user_FK")
+}
+
+model chat {
+  id                    String  @id @db.VarChar(50)
+  token                 String? @db.VarChar(100)
+  command               String? @db.VarChar(100)
+  command_state         Int?
+  command_state_ordinal Int?
+  extra_info            Json
+  user                  user?
+}

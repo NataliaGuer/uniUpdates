@@ -1,0 +1,12 @@
+<% if (profs.length) { %>
+👩‍🏫👨‍🏫 I professori che ho trovato in base alla tua ricerca sono:
+<% profs.forEach(prof => { %>
+&#8226; <b><%= prof.name %></b>:
+    email: <%= prof.email %>
+    corsi: <% prof.courses.forEach(course => { %>
+        <b><%= course.name %></b> (id: <%= course.id %>) <% }) %>
+<% })
+%>
+<% } else { %>
+🔴 Non ho trovato nessun professore con questo nome
+<% } %>

@@ -1,0 +1,10 @@
+📖 Informazioni sul corso <b><%= course.name %></b>:
+&#8226; id: <%= course.id %>
+&#8226; docenti: <% teachers.forEach(t => { %> 
+    &#8211; <%= t.name %> <% }) %>
+&#8226; inizio lezioni: <%= start%>
+&#8226; fine lezioni: <%= end%>
+&#8226; orari: <% lessons.forEach(l => { %>
+    &#8211; <%= l.day %> <%= l.start %> - <%= l.end %>, aula: <%= l.room %><% }) %>
+
+Per iniziare a seguire il corso utilizza il comando <%= follow %>.

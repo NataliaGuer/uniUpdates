@@ -1,0 +1,14 @@
+<% if (courses.length > 0) { %>
+🟢 I corsi che segui attualmente sono:<% courses.forEach(course => { %>
+&#8226; <b><%= course.name %></b> (id: <%= course.id %>) <% }) %>
+
+Per seguire un nuovo corso utilizza il comando <%= follow %>.
+Per smettere di seguire un corso usa il comando <%= unfollow %>.
+
+<% } else { %>
+🔴 Sembra che tu non stia seguendo nessun corso.
+
+Per seguire un nuovo corso utilizza il comando <%= follow %>.
+<% } %>
+
+ 
