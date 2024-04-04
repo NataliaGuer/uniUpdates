@@ -46,6 +46,10 @@ class CommandDirectory {
                 constructor: command_1.ToProfCommandHandler,
                 description: "Invia un messaggio al professore selezionato",
             },
+            [command_1.GetMessagesCommandHandler.command]: {
+                constructor: command_1.GetMessagesCommandHandler,
+                description: "Restituisce una lista di tutti i messaggi ricevuti dagli studenti",
+            }
         };
         /**
          * contiene le chiavi dei comandi che sono disponibili per l'utente
@@ -70,7 +74,10 @@ class CommandDirectory {
             command_1.ProfinfoCommandHandler.command,
             command_1.ToProfCommandHandler.command,
         ];
-        this.professorCommands = [];
+        this.professorCommands = [
+            ...this.anonymousUserCommands,
+            command_1.GetMessagesCommandHandler.command
+        ];
     }
     getConstructor(command) {
         return this.commandHandlersMap[command]

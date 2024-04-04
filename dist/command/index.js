@@ -25,4 +25,6 @@ __exportStar(require("./unfollow"), exports);
 __exportStar(require("./list_following"), exports);
 __exportStar(require("./prof_info"), exports);
 __exportStar(require("./to_prof"), exports);
+// --- comandi per professori ---
+__exportStar(require("./get_messages"), exports);
 //# sourceMappingURL=index.js.map

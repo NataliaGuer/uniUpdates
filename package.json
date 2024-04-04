@@ -21,6 +21,7 @@
         "@typescript-eslint/parser": "^7.1.0",
         "eslint": "^8.57.0",
         "prisma": "^5.10.2",
+        "ts-node": "^10.9.2",
         "typegram": "^5.2.0",
         "typescript": "^5.3.3"
     },

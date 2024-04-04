@@ -1,0 +1,9 @@
+<% if (countMessages === 0 ) { %>
+    Non hai nessun messaggio <% if (messagesType === 1) { %>da leggere<% } else { %>già letto<% } %>.
+<% } else if (countMessages === 1) { %>
+    Hai un messaggio <% if (messagesType === 1) { %>da leggere<% } else { %>già letto<% } %>.
+    Seleziona il filtro che vuoi applicare:
+<% } else {%>
+    Hai <%= countMessages %> messaggi <% if (messagesType === 1) { %>da leggere<% } else { %>già letti<% } %>.
+    Seleziona il filtro che vuoi applicare:
+<% } %>

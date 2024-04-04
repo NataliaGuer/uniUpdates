@@ -93,6 +93,4 @@ app.use((_req, res, next) => {
 app.listen(APP_PORT, APP_HOST, () => __awaiter(void 0, void 0, void 0, function* () {
     init();
 }));
-//glpat-dz-af4yffUAxXQdSKcMY
-//glpat-MZy69nzV32TCXXFBYT5d
 //# sourceMappingURL=app.js.map

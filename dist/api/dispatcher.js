@@ -40,7 +40,16 @@ class Dispatcher {
             */
             if (!this.isAuthenticated(chatReq)) {
                 command = new command_1.AuthenticateCommandHandler();
-                return command.handle(chatReq);
+                try {
+                    return command.handle(chatReq);
+                }
+                catch (error) {
+                    console.log(error);
+                    return {
+                        success: false,
+                        text: "Errore interno"
+                    };
+                }
             }
             else if (command) {
                 return this.prisma.user

@@ -12,6 +12,10 @@ export class StopCommandHandler extends BaseCommandHandler {
     templatesFolder: string;
 
     handle(req: Request): Promise<Response> {
-        throw new Error("not yet implemented");
+        this.cleanChatState(req.chat);
+        return this.wrapResponseInPromise({
+            success: true,
+            text: "Comando interrotto"
+        });
     }
 }

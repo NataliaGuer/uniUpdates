@@ -38,7 +38,7 @@ export class Dispatcher {
             const chatReq = { ...req, chat: chat };
 
             let command = this.getCommandInstance(chatReq);
-
+            
             /*
             nel caso l'utente non sia autneticato il comando che
             ha richiesto viene sostituito da quello per l'autenticazione
@@ -46,7 +46,16 @@ export class Dispatcher {
             */
             if (!this.isAuthenticated(chatReq)) {
                 command = new AuthenticateCommandHandler();
-                return command.handle(chatReq);
+                try {
+                    return command.handle(chatReq);
+                } catch (error) {
+                    console.log(error);
+                    
+                    return {
+                        success: false,
+                        text: "Errore interno"
+                    }
+                }
             } else if (command) {
                 return this.prisma.user
                     .findUnique({

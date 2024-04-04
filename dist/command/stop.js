@@ -11,7 +11,11 @@ class StopCommandHandler extends base_1.BaseCommandHandler {
         this.convStates = null;
     }
     handle(req) {
-        throw new Error("not yet implemented");
+        this.cleanChatState(req.chat);
+        return this.wrapResponseInPromise({
+            success: true,
+            text: "Comando interrotto"
+        });
     }
 }
 exports.StopCommandHandler = StopCommandHandler;
