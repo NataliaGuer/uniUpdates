@@ -12,6 +12,18 @@ export const MessageType = {
         description: "Altro",
     },
 };
+//TODO capire se MessageType e MessageTypeMapping possono essere uniti
+export const MessageTypeMapping = {
+    1: {
+        description: "Richiesta di ricevimento"
+    },
+    2: {
+        description: "Informazioni su un corso tenuto dal docente"
+    },
+    3: {
+        description: "Altro"
+    }
+}
 
 export const MessageStatus = {
     sent: 1,

@@ -60,8 +60,8 @@ model sent_messages {
   sent_date                     DateTime  @default(now()) @db.Timestamp(0)
   last_view_date                DateTime? @db.Timestamp(0)
   type                          Int?
-  user_sent_messages_fromTouser user      @relation("sent_messages_fromTouser", fields: [from], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK")
-  user_sent_messages_toTouser   user      @relation("sent_messages_toTouser", fields: [to], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK_1")
+  fromUser                      user      @relation("sent_messages_fromTouser", fields: [from], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK")
+  toUser                        user      @relation("sent_messages_toTouser", fields: [to], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK_1")
 
   @@index([from], map: "sent_messages_FK")
   @@index([to], map: "sent_messages_FK_1")

@@ -51,9 +51,12 @@ app.post(uri, (req, res, next) => __awaiter(void 0, void 0, void 0, function* ()
         messageBody = req.body.message;
         chat = req.body.message.chat;
     }
-    else {
+    else if (req.body.hasOwnProperty("callback_query")) {
         messageBody = req.body.callback_query;
         chat = req.body.callback_query.message.chat;
+    }
+    else {
+        return res.send();
     }
     dispatcher
         .dispatch({

@@ -8,13 +8,19 @@ class StudentNameFilter {
             text: "Inserisci il nome dello studente o una sua parte",
         };
     }
-    handleValue(value) {
+    handleValue(req) {
         const prisma = prismaWrapper_1.PrismaClientWrapper.getInstance();
         return prisma.sent_messages.findMany({
             where: {
                 from: {
-                    contains: value
+                    contains: req.text
                 }
+            },
+            orderBy: {
+                sent_date: "desc"
+            },
+            include: {
+                fromUser: true
             }
         });
     }

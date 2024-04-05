@@ -1,12 +1,15 @@
-import { chat } from "@prisma/client";
+import { chat, sent_messages, user } from "@prisma/client";
 import { ChatRequest } from "../../api/request";
 import { Response } from "../../api/response";
 import { BaseCommandHandler, convState, messageTemplates } from "../base";
-import { renderFile } from "ejs";
-import { MessageStatus } from "../../model/message";
+import { fileLoader, renderFile } from "ejs";
+import { MessageStatus, MessageTypeMapping } from "../../model/message";
 import { StudentNameFilter } from "./filters/student_name_filter";
 import { MessageTypeFilter } from "./filters/message_type_filter";
-import { MessageFilterConstructor } from "./filters/message_filter";
+import {
+    MessageFilter,
+    MessageFilterConstructor,
+} from "./filters/message_filter";
 
 interface filters {
     [key: string]: {
@@ -21,6 +24,7 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
     templatesFolder = "get_messages";
     templates: messageTemplates = {
         main: this.getTemplate("main"),
+        messagesList: this.getTemplate("messages_list"),
     };
 
     private WAITING_FOR_MESSAGE_STATUS = 1;
@@ -107,6 +111,15 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
     }
 
     protected showAvailableFilters(req: ChatRequest): Promise<Response> {
+
+        if (!req.data){
+            this.cleanChatState(req.chat);
+            return this.wrapResponseInPromise({
+                success: false,
+                text: "Comando interrotto",
+            })
+        }
+
         const { chat, user } = req;
         const messageCount = this.prisma.sent_messages.count({
             where: {
@@ -128,15 +141,20 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
         return messageCount.then((count) => {
             if (count > 0) {
                 chat.command_state = this.WAITING_FOR_FILTER_SELECTION;
+                chat.extra_info = { selectedStatus: req.data };
                 this.updateChatState(chat);
             } else {
                 this.cleanChatState(chat);
             }
 
-            return renderFile(this.templates.main, {
-                countMessages: count,
-                messagesType: parseInt(req.data),
-            }).then((html) => {
+            return renderFile(
+                this.templates.main,
+                {
+                    countMessages: count,
+                    messagesType: parseInt(req.data),
+                },
+                { rmWhitespace: true }
+            ).then((html) => {
                 return {
                     success: true,
                     text: html,
@@ -147,26 +165,109 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
     }
 
     protected handleFilter(req: ChatRequest): Promise<Response> {
+        const chatExtraInfo = JSON.parse(req.chat.extra_info.toString());
+        chatExtraInfo.filterApplied = req.data;
+
         req.chat.command_state = this.WAITING_FOR_FILTER_INFO;
-        req.chat.extra_info = {filterKey: req.data};
+        req.chat.extra_info = chatExtraInfo;
         this.updateChatState(req.chat);
+        
+        const filterHandler = this.getFilterHandler(req.data);
+        if (filterHandler) {
+            let filterHandler = new this.availableFilters[req.data].filterConstructor();
+            let res = filterHandler.getFilterCaption();
+    
+            return this.wrapResponseInPromise({
+                success: true,
+                ...res,
+            });
+        }
 
-        let filterHandler = new this.availableFilters[
-            req.data
-        ].filterConstructor();
-
-        let res = filterHandler.getFilterCaption();
-
-        return this.wrapResponseInPromise({
-            success: true,
-            ...res,
+        //the user selected "no filter option" so we return all the messages
+        const allMessages = this.prisma.sent_messages.findMany({
+            where: {
+                status: parseInt(chatExtraInfo.selectedStatus),
+            },
+            include: {
+                fromUser: true,
+            },
+            orderBy: {
+                sent_date: "desc",
+            },
         });
+
+        this.cleanChatState(req.chat);
+
+        return allMessages.then((all) => this.createMessagesResponse(all));
     }
 
     protected showMessages(req: ChatRequest): Promise<Response> {
-        return this.wrapResponseInPromise({
-            success: true,
-            text: "not",
+        //the user selected the filter and replied with an option or text
+        //the filter take all the request and, depending on what it presented previously to the
+        //user, extracts the desired data from it
+        //the filter key is in chat.extradata
+        let chatExtraData = JSON.parse(req.chat.extra_info.toString())
+        const filterHandler = this.getFilterHandler(chatExtraData.filterApplied)
+
+        let res: Promise<Response>;
+        if (filterHandler) {
+            res = filterHandler.handleValue(req)
+            .then(
+                (messages) => this.createMessagesResponse(messages)
+            )
+        } else {
+            res = this.wrapResponseInPromise({
+                success: false,
+                text: "Il filtro selezionato non è valido",
+            })
+        }
+        
+        this.cleanChatState(req.chat);
+        return res;
+    }
+
+    protected createMessagesResponse(
+        messages: ({ fromUser: user } & sent_messages)[]
+    ): Promise<Response> {
+        const mappedMessages = messages.map((message) => {
+            return {
+                id: message.id,
+                date: this.formatMessagedate(message.sent_date),
+                hour: this.formatMessageHour(message.sent_date),
+                student: message.fromUser.name,
+                text: message.text,
+                typeDescription: MessageTypeMapping[message.type].description,
+            };
         });
+
+        return renderFile(
+            this.templates.messagesList,
+            {
+                messages: mappedMessages,
+            },
+            { rmWhitespace: true }
+        ).then((html) => {
+            return {
+                success: true,
+                parse_mode: "HTML",
+                text: html,
+            };
+        });
+    }
+
+    protected formatMessagedate(date: Date): string {
+        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+    }
+
+    protected formatMessageHour(date: Date): string {
+        return `${date.getHours()}:${date.getMinutes()}`;
+    }
+
+    protected getFilterHandler(key: string): MessageFilter {
+        const constructor = this.availableFilters[key]?.filterConstructor;
+        if (constructor) {
+            return new this.availableFilters[key].filterConstructor();
+        }
+        return null;
     }
 }

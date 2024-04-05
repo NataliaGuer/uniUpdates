@@ -1,0 +1,9 @@
+<% if (messages.length) { %>
+    <% messages.forEach(message => { %>
+    [ID: <%= message.id %>] <b><%= message.typeDescription %></b>
+    Il <%= message.date %> alle <%= message.hour %> <%= message.student %> ha scritto:
+    <i><%= message.text %></i>
+    <% }) %>
+<% } else { %>
+    🔴 Non ci sono messaggi che corrispondono al filtro selezionato
+<% } %>

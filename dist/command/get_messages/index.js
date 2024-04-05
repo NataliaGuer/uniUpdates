@@ -12,6 +12,7 @@ class GetMessagesCommandHandler extends base_1.BaseCommandHandler {
         this.templatesFolder = "get_messages";
         this.templates = {
             main: this.getTemplate("main"),
+            messagesList: this.getTemplate("messages_list"),
         };
         this.WAITING_FOR_MESSAGE_STATUS = 1;
         this.WAITING_FOR_FILTER_SELECTION = 2;
@@ -90,6 +91,13 @@ class GetMessagesCommandHandler extends base_1.BaseCommandHandler {
         });
     }
     showAvailableFilters(req) {
+        if (!req.data) {
+            this.cleanChatState(req.chat);
+            return this.wrapResponseInPromise({
+                success: false,
+                text: "Comando interrotto",
+            });
+        }
         const { chat, user } = req;
         const messageCount = this.prisma.sent_messages.count({
             where: {
@@ -109,6 +117,7 @@ class GetMessagesCommandHandler extends base_1.BaseCommandHandler {
         return messageCount.then((count) => {
             if (count > 0) {
                 chat.command_state = this.WAITING_FOR_FILTER_SELECTION;
+                chat.extra_info = { selectedStatus: req.data };
                 this.updateChatState(chat);
             }
             else {
@@ -117,7 +126,7 @@ class GetMessagesCommandHandler extends base_1.BaseCommandHandler {
             return (0, ejs_1.renderFile)(this.templates.main, {
                 countMessages: count,
                 messagesType: parseInt(req.data),
-            }).then((html) => {
+            }, { rmWhitespace: true }).then((html) => {
                 return {
                     success: true,
                     text: html,
@@ -127,18 +136,87 @@ class GetMessagesCommandHandler extends base_1.BaseCommandHandler {
         });
     }
     handleFilter(req) {
+        const chatExtraInfo = JSON.parse(req.chat.extra_info.toString());
+        chatExtraInfo.filterApplied = req.data;
         req.chat.command_state = this.WAITING_FOR_FILTER_INFO;
-        req.chat.extra_info = { filterKey: req.data };
+        req.chat.extra_info = chatExtraInfo;
         this.updateChatState(req.chat);
-        let filterHandler = new this.availableFilters[req.data].filterConstructor();
-        let res = filterHandler.getFilterCaption();
-        return this.wrapResponseInPromise(Object.assign({ success: true }, res));
+        const filterHandler = this.getFilterHandler(req.data);
+        if (filterHandler) {
+            let filterHandler = new this.availableFilters[req.data].filterConstructor();
+            let res = filterHandler.getFilterCaption();
+            return this.wrapResponseInPromise(Object.assign({ success: true }, res));
+        }
+        //the user selected "no filter option" so we return all the messages
+        const allMessages = this.prisma.sent_messages.findMany({
+            where: {
+                status: parseInt(chatExtraInfo.selectedStatus),
+            },
+            include: {
+                fromUser: true,
+            },
+            orderBy: {
+                sent_date: "desc",
+            },
+        });
+        this.cleanChatState(req.chat);
+        return allMessages.then((all) => this.createMessagesResponse(all));
     }
     showMessages(req) {
-        return this.wrapResponseInPromise({
-            success: true,
-            text: "not",
+        //the user selected the filter and replied with an option or text
+        //the filter take all the request and, depending on what it presented previously to the
+        //user, extracts the desired data from it
+        //the filter key is in chat.extradata
+        let chatExtraData = JSON.parse(req.chat.extra_info.toString());
+        const filterHandler = this.getFilterHandler(chatExtraData.filterApplied);
+        let res;
+        if (filterHandler) {
+            res = filterHandler.handleValue(req)
+                .then((messages) => this.createMessagesResponse(messages));
+        }
+        else {
+            res = this.wrapResponseInPromise({
+                success: false,
+                text: "Il filtro selezionato non è valido",
+            });
+        }
+        this.cleanChatState(req.chat);
+        return res;
+    }
+    createMessagesResponse(messages) {
+        const mappedMessages = messages.map((message) => {
+            return {
+                id: message.id,
+                date: this.formatMessagedate(message.sent_date),
+                hour: this.formatMessageHour(message.sent_date),
+                student: message.fromUser.name,
+                text: message.text,
+                typeDescription: message_1.MessageTypeMapping[message.type].description,
+            };
         });
+        return (0, ejs_1.renderFile)(this.templates.messagesList, {
+            messages: mappedMessages,
+        }, { rmWhitespace: true }).then((html) => {
+            return {
+                success: true,
+                parse_mode: "HTML",
+                text: html,
+            };
+        });
+    }
+    formatMessagedate(date) {
+        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+    }
+    formatMessageHour(date) {
+        return `${date.getHours()}:${date.getMinutes()}`;
+    }
+    getFilterHandler(key) {
+        var _a;
+        const constructor = (_a = this.availableFilters[key]) === null || _a === void 0 ? void 0 : _a.filterConstructor;
+        if (constructor) {
+            return new this.availableFilters[key].filterConstructor();
+        }
+        return null;
     }
 }
 exports.GetMessagesCommandHandler = GetMessagesCommandHandler;
