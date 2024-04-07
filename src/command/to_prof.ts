@@ -205,7 +205,6 @@ export class ToProfCommandHandler extends BaseCommandHandler {
         extraInfo.messageText = req.text;
         //we save the id of the message to which the professor will replay
         extraInfo.messageId = req.message_id;
-        console.log(extraInfo);
         
         req.chat.extra_info = extraInfo;
         this.updateChatState(req.chat);

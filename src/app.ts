@@ -58,7 +58,7 @@ app.post(uri, async (req: Request, res: Response, next: NextFunction) => {
     } else {
         return res.send();
     }
-
+    
     dispatcher
         .dispatch({
             chatId: chat.id,

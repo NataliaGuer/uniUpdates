@@ -68,7 +68,7 @@ export class ProfinfoCommandHandler extends BaseCommandHandler {
                 name: true,
                 teaching: {
                     include: {
-                        course_teaching_courseTocourse: true
+                        teaching_course: true
                     }
                 }
             }
@@ -83,8 +83,8 @@ export class ProfinfoCommandHandler extends BaseCommandHandler {
             const data = users.map((user) => {
                 const courses = user.teaching.map((teacher) => {
                     return {
-                        name: teacher.course_teaching_courseTocourse.name,
-                        id: teacher.course_teaching_courseTocourse.id
+                        name: teacher.teaching_course.name,
+                        id: teacher.teaching_course.id
                     }
                 })
 

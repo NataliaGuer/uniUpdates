@@ -37,8 +37,6 @@ export class ListFollowingCommandHandler extends BaseCommandHandler {
                     };
                 });
 
-                console.log(courses);
-
                 return renderFile(this.templates.list, {
                     courses: courses,
                     follow: FollowCommandHandler.command,

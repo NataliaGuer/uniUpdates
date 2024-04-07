@@ -10,7 +10,7 @@ datasource db {
 model attendance {
   student                             String @db.VarChar(100)
   course                              Int
-  student_attendance_studentTostudent user   @relation("attendance_studentTostudent", fields: [student], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "attendance_FK")
+  attendace_student                   user   @relation("attendance_studentTostudent", fields: [student], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "attendance_FK")
   course_attendance_courseTocourse    course @relation("attendance_courseTocourse", fields: [course], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "attendance_FK_1")
 
   @@id([student, course])
@@ -44,7 +44,7 @@ model teaching {
   teacher_id                     String @db.VarChar(100)
   course                         Int
   user                           user   @relation(fields: [teacher_id], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "teaching_FK")
-  course_teaching_courseTocourse course @relation("teaching_courseTocourse", fields: [course], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "teaching_FK_1")
+  teaching_course                course @relation("teaching_courseTocourse", fields: [course], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "teaching_FK_1")
 
   @@id([teacher_id, course])
   @@index([course], map: "teaching_FK_1")

@@ -13,6 +13,7 @@ import {
     ToProfCommandHandler,
     GetMessagesCommandHandler,
     ReplayCommandHandler,
+    CourseMessageCommandHandler,
 } from "../command";
 import { UserRole } from "../model/user";
 
@@ -69,6 +70,11 @@ export class CommandDirectory {
             constructor: ReplayCommandHandler,
             description:
                 "Permette di rispondere a un messaggio inviato da uno studente",
+        },
+        [CourseMessageCommandHandler.command]: {
+            constructor: CourseMessageCommandHandler,
+            description:
+                "Permette al docente di inviare un messaggio a tutti gli studenti che seguono un determinato corso",
         }
     };
 
@@ -100,7 +106,8 @@ export class CommandDirectory {
     private professorCommands: string[] = [
         ...this.anonymousUserCommands,
         GetMessagesCommandHandler.command,
-        ReplayCommandHandler.command
+        ReplayCommandHandler.command,
+        CourseMessageCommandHandler.command
     ];
 
     getConstructor(command: string): CommandHandlerConstructor | null {
