@@ -23,12 +23,13 @@ export class MessageTypeFilter implements MessageFilter{
         };
     }
 
-    handleValue(req: ChatRequest): Promise<MessageWithFromUser[]> {
+    handleValue(req: ChatRequest, status: number): Promise<MessageWithFromUser[]> {
         
         const prisma = PrismaClientWrapper.getInstance();
         return prisma.sent_messages.findMany({
             where: {
-                type: parseInt(req.data)
+                type: parseInt(req.data),
+                status: status
             },
             orderBy: {
                 sent_date: "desc"

@@ -45,13 +45,16 @@ app.post(uri, async (req: Request, res: Response, next: NextFunction) => {
 
     let messageBody;
     let chat;
+    let messageId;
 
     if (req.body.hasOwnProperty("message")) {
         messageBody = req.body.message;
         chat = req.body.message.chat;
+        messageId = req.body.message.message_id;
     } else if (req.body.hasOwnProperty("callback_query")){
         messageBody = req.body.callback_query;
         chat = req.body.callback_query.message.chat;
+        messageId = req.body.callback_query.message.message_id;
     } else {
         return res.send();
     }
@@ -61,34 +64,53 @@ app.post(uri, async (req: Request, res: Response, next: NextFunction) => {
             chatId: chat.id,
             text: messageBody?.text,
             data: messageBody?.data,
+            message_id: messageId
         })
-        .then((response) => {
-            let message: { [name: string]: any } = {
-                chat_id: chat.id,
-                text: response.text,
-                parse_mode: response.parse_mode
-            };
-
-            if (response.options) {
-                let keyboardOptions = response.options.map((option) => {
-                    return [{
-                        text: option.text,
-                        callback_data: option.data,
-                    }];
-                });
-
-                message.reply_markup = JSON.stringify({
-                    inline_keyboard: keyboardOptions,
-                });
+        .then((responses) => {
+            if (!(responses instanceof Array)) {
+                responses = [responses];
             }
 
-            axios.post(`${telegram_api}/sendMessage`, message, {timeout: 5000})
-            .then(() => {
-                return res.send();
-            })
-            .catch((err) => {
-                console.log("errore");
-            })
+            let promises = [];
+
+            responses.forEach((response) => {
+                let responseMessage: { [name: string]: any } = {
+                    //if response.to_chat has a value we send the message to the specified chat
+                    chat_id: response.toChat ?? chat.id,
+                    text: response.text,
+                    parse_mode: response.parseMode
+                };
+    
+                if (response.options) {
+                    let keyboardOptions = response.options.map((option) => {
+                        return [{
+                            text: option.text,
+                            callback_data: option.data,
+                        }];
+                    });
+    
+                    responseMessage.reply_markup = JSON.stringify({
+                        inline_keyboard: keyboardOptions,
+                    });
+                }
+    
+                if (response.replayToMessage) {
+                    responseMessage.reply_parameters = {
+                        message_id: response.replayToMessage
+                    };
+                }
+    
+                let responsePromise = axios.post(`${telegram_api}/sendMessage`, responseMessage, {timeout: 5000})
+                .catch((err) => {
+                    console.log("errore");
+                })
+
+                promises.push(responsePromise);
+            });
+
+            Promise.all(promises).then(() => {
+                res.send();
+            });
         });
 });
 

@@ -133,7 +133,7 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
                     text: `Mi confermi che la tua email è ${email}?`,
                     options: [
                         {
-                            text: "Si",
+                            text: "Sì",
                             data: "1",
                         },
                         {

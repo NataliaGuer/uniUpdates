@@ -5,6 +5,7 @@ export interface Request {
     chat?: chat;
     text: string;
     data?: string;
+    message_id: number;
 }
 
 export interface ChatRequest extends Request {

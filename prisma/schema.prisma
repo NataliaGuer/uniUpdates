@@ -52,16 +52,17 @@ model teaching {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model sent_messages {
-  id                            Int       @id @default(autoincrement())
-  to                            String    @db.VarChar(100)
-  from                          String    @db.VarChar(100)
-  text                          String    @db.VarChar(250)
-  status                        Int       @default(0)
-  sent_date                     DateTime  @default(now()) @db.Timestamp(0)
-  last_view_date                DateTime? @db.Timestamp(0)
-  type                          Int?
-  fromUser                      user      @relation("sent_messages_fromTouser", fields: [from], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK")
-  toUser                        user      @relation("sent_messages_toTouser", fields: [to], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK_1")
+  id             Int       @id @default(autoincrement())
+  to             String    @db.VarChar(100)
+  from           String    @db.VarChar(100)
+  text           String    @db.VarChar(250)
+  status         Int       @default(0)
+  sent_date      DateTime  @default(now()) @db.Timestamp(0)
+  last_view_date DateTime? @db.Timestamp(0)
+  type           Int?
+  message_id     Int?
+  fromUser       user      @relation("sent_messages_fromTouser", fields: [from], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK")
+  toUser         user      @relation("sent_messages_toTouser", fields: [to], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "sent_messages_FK_1")
 
   @@index([from], map: "sent_messages_FK")
   @@index([to], map: "sent_messages_FK_1")

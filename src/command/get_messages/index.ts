@@ -2,7 +2,7 @@ import { chat, sent_messages, user } from "@prisma/client";
 import { ChatRequest } from "../../api/request";
 import { Response } from "../../api/response";
 import { BaseCommandHandler, convState, messageTemplates } from "../base";
-import { fileLoader, renderFile } from "ejs";
+import { renderFile } from "ejs";
 import { MessageStatus, MessageTypeMapping } from "../../model/message";
 import { StudentNameFilter } from "./filters/student_name_filter";
 import { MessageTypeFilter } from "./filters/message_type_filter";
@@ -111,13 +111,12 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
     }
 
     protected showAvailableFilters(req: ChatRequest): Promise<Response> {
-
-        if (!req.data){
+        if (!req.data) {
             this.cleanChatState(req.chat);
             return this.wrapResponseInPromise({
                 success: false,
                 text: "Comando interrotto",
-            })
+            });
         }
 
         const { chat, user } = req;
@@ -171,12 +170,14 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
         req.chat.command_state = this.WAITING_FOR_FILTER_INFO;
         req.chat.extra_info = chatExtraInfo;
         this.updateChatState(req.chat);
-        
+
         const filterHandler = this.getFilterHandler(req.data);
         if (filterHandler) {
-            let filterHandler = new this.availableFilters[req.data].filterConstructor();
+            let filterHandler = new this.availableFilters[
+                req.data
+            ].filterConstructor();
             let res = filterHandler.getFilterCaption();
-    
+
             return this.wrapResponseInPromise({
                 success: true,
                 ...res,
@@ -198,7 +199,12 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
 
         this.cleanChatState(req.chat);
 
-        return allMessages.then((all) => this.createMessagesResponse(all));
+        return allMessages.then((all) => {
+            if (parseInt(chatExtraInfo.selectedStatus) === MessageStatus.sent) {
+                this.setAsRead(all);
+            }
+            return this.createMessagesResponse(all);
+        });
     }
 
     protected showMessages(req: ChatRequest): Promise<Response> {
@@ -206,22 +212,29 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
         //the filter take all the request and, depending on what it presented previously to the
         //user, extracts the desired data from it
         //the filter key is in chat.extradata
-        let chatExtraData = JSON.parse(req.chat.extra_info.toString())
-        const filterHandler = this.getFilterHandler(chatExtraData.filterApplied)
+        let chatExtraInfo = JSON.parse(req.chat.extra_info.toString());
+        const filterHandler = this.getFilterHandler(
+            chatExtraInfo.filterApplied
+        );
 
         let res: Promise<Response>;
         if (filterHandler) {
-            res = filterHandler.handleValue(req)
-            .then(
-                (messages) => this.createMessagesResponse(messages)
-            )
+            res = filterHandler
+                .handleValue(req, parseInt(chatExtraInfo.selectedStatus))
+                .then((messages) => {
+                    if (parseInt(chatExtraInfo.selectedStatus) === MessageStatus.sent) {
+                        this.setAsRead(messages);
+                    }
+                    this.setAsRead(messages);
+                    return this.createMessagesResponse(messages);
+                });
         } else {
             res = this.wrapResponseInPromise({
                 success: false,
                 text: "Il filtro selezionato non è valido",
-            })
+            });
         }
-        
+
         this.cleanChatState(req.chat);
         return res;
     }
@@ -249,9 +262,24 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
         ).then((html) => {
             return {
                 success: true,
-                parse_mode: "HTML",
+                parseMode: "HTML",
                 text: html,
             };
+        });
+    }
+
+    protected setAsRead(messages: sent_messages[]) {
+        messages.forEach((message) => {
+            this.prisma.sent_messages
+                .update({
+                    where: {
+                        id: message.id,
+                    },
+                    data: {
+                        status: MessageStatus.read,
+                    },
+                })
+                .then((res) => {});
         });
     }
 

@@ -202,7 +202,11 @@ export class ToProfCommandHandler extends BaseCommandHandler {
         req.chat.command_state_ordinal = 1;
         
         let extraInfo = JSON.parse(req.chat.extra_info.toString());
-        extraInfo.message = req.text;
+        extraInfo.messageText = req.text;
+        //we save the id of the message to which the professor will replay
+        extraInfo.messageId = req.message_id;
+        console.log(extraInfo);
+        
         req.chat.extra_info = extraInfo;
         this.updateChatState(req.chat);
 
@@ -214,7 +218,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
             return {
                 success: true,
                 text: html,
-                parse_mode: "HTML",
+                parseMode: "HTML",
                 options: [
                     {
                         text: "Si",
@@ -244,8 +248,9 @@ export class ToProfCommandHandler extends BaseCommandHandler {
                     from: req.user.email,
                     to: extraInfo.to,
                     type: extraInfo.type,
-                    text: extraInfo.message,
-                    status: MessageStatus.sent
+                    text: extraInfo.messageText,
+                    status: MessageStatus.sent,
+                    message_id: extraInfo.messageId
                 },
             })
             .then((message) => {

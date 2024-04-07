@@ -70,7 +70,7 @@ export class FollowCommandHandler extends BaseCommandHandler {
                 return {
                     success: true,
                     text: html,
-                    parse_mode: "HTML"
+                    parseMode: "HTML"
                 }
             })
         })

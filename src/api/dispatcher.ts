@@ -13,7 +13,7 @@ export class Dispatcher {
         this.commandDirectory = new CommandDirectory();
     }
 
-    dispatch(req: Request): Promise<Response> {
+    dispatch(req: Request): Promise<Response|Response[]> {
         //ottenimento della chat o sua creazione
         let chatPromise = this.prisma.chat
             .findUnique({

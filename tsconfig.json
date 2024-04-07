@@ -6,7 +6,8 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "dist",
-    "typeRoots": ["./node_modules/@types", "src/extended_types"]
+    "typeRoots": ["./node_modules/@types", "src/extended_types"],
+    "strict": false
   },
   "lib": ["es2015"],
 }

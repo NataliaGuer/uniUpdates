@@ -14,7 +14,7 @@ export interface MessageFilter {
      *
      * returns an array of sent_messages each with the info of the user who sent the message
      */
-    handleValue(req: ChatRequest): Promise<MessageWithFromUser[]>;
+    handleValue(req: ChatRequest, status: number): Promise<MessageWithFromUser[]>;
 }
 
 export interface FilterCaption {

@@ -31,7 +31,7 @@ export class ListCoursesCommandHandler extends BaseCommandHandler {
                     return {
                         success: true,
                         text: html,
-                        parse_mode: "HTML",
+                        parseMode: "HTML",
                     };
                 });
             });

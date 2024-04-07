@@ -17,13 +17,15 @@
     "devDependencies": {
         "@types/ejs": "^3.1.5",
         "@types/jsonwebtoken": "^9.0.6",
-        "@typescript-eslint/eslint-plugin": "^7.1.0",
-        "@typescript-eslint/parser": "^7.1.0",
+        "@typescript-eslint/eslint-plugin": "^7.5.0",
+        "@typescript-eslint/parser": "^7.5.0",
         "eslint": "^8.57.0",
+        "eslint-config-prettier": "^9.1.0",
+        "prettier": "^3.2.5",
         "prisma": "^5.10.2",
         "ts-node": "^10.9.2",
         "typegram": "^5.2.0",
-        "typescript": "^5.3.3"
+        "typescript": "^5.4.4"
     },
     "dependencies": {
         "@prisma/client": "^5.10.2",

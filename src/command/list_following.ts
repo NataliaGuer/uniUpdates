@@ -47,7 +47,7 @@ export class ListFollowingCommandHandler extends BaseCommandHandler {
                     return {
                         success: true,
                         text: html,
-                        parse_mode: "HTML",
+                        parseMode: "HTML",
                     };
                 });
             });

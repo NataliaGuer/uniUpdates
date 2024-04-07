@@ -12,13 +12,14 @@ export class StudentNameFilter implements MessageFilter{
             text: "Inserisci il nome dello studente o una sua parte",
         };
     }
-    handleValue(req: ChatRequest): Promise<MessageWithFromUser[]> {
+    handleValue(req: ChatRequest, status: number): Promise<MessageWithFromUser[]> {
         const prisma = PrismaClientWrapper.getInstance();
         return prisma.sent_messages.findMany({
             where: {
                 from: {
                     contains: req.text
-                }
+                },
+                status: status
             },
             orderBy: {
                 sent_date: "desc"

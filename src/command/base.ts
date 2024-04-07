@@ -12,7 +12,7 @@ export abstract class BaseCommandHandler {
     static command: string;
     abstract convStates: convState | null;
     abstract templatesFolder: string | null;
-    abstract handle(req: ChatRequest): Promise<Response>;
+    abstract handle(req: ChatRequest): Promise<Response|Response[]>;
 
     constructor() {
         this.prisma = PrismaClientWrapper.getInstance();
@@ -83,5 +83,5 @@ export interface messageTemplates {
 }
 
 export interface CommandHandlerConstructor {
-    new() : BaseCommandHandler;
+    new(): BaseCommandHandler;
 }
