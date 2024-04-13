@@ -39,7 +39,7 @@ export class FollowCommandHandler extends BaseCommandHandler {
         return res;
     }
 
-    private requestCourseId(chat: chat): Promise<Response> {
+    protected requestCourseId(chat: chat): Promise<Response> {
         
         chat.command = FollowCommandHandler.command;
         chat.command_state = this.WAITING_FOR_COURSE_ID;
@@ -51,7 +51,7 @@ export class FollowCommandHandler extends BaseCommandHandler {
         });
     }
 
-    private setFollowing(req: ChatRequest): Promise<Response> {
+    protected setFollowing(req: ChatRequest): Promise<Response> {
         return this.prisma.user.update({
             where: {
                 chat_id: req.chat.id

@@ -5,7 +5,7 @@ import { PrismaClientWrapper } from "../utils/db/prismaWrapper";
 import path from "path";
 
 export abstract class BaseCommandHandler {
-    prisma: PrismaClientWrapper;
+    protected prisma: PrismaClientWrapper;
     INITIAL_STATE = null;
     templates: messageTemplates;
 

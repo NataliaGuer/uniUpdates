@@ -42,7 +42,7 @@ export class ProfinfoCommandHandler extends BaseCommandHandler {
         return res;
     }
 
-    private requestProfName(chat: chat): Promise<Response> {
+    protected requestProfName(chat: chat): Promise<Response> {
         chat.command = ProfinfoCommandHandler.command;
         chat.command_state = this.WAITING_FOR_PROF_NAME;
         chat.command_state_ordinal = 0;
@@ -54,7 +54,7 @@ export class ProfinfoCommandHandler extends BaseCommandHandler {
         });
     }
 
-    private getProfInfo(req: ChatRequest): Promise<Response> {
+    protected getProfInfo(req: ChatRequest): Promise<Response> {
         this.cleanChatState(req.chat);
 
         return this.prisma.user.findMany({

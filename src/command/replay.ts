@@ -73,7 +73,7 @@ export class ReplayCommandHandler extends BaseCommandHandler {
         return res;
     }
 
-    requestMessageId(chat: chat): Promise<Response> {
+    protected requestMessageId(chat: chat): Promise<Response> {
 
         chat.command = ReplayCommandHandler.command;
         chat.command_state = this.WAITING_FOR_MESSAGE_ID;
@@ -87,7 +87,7 @@ export class ReplayCommandHandler extends BaseCommandHandler {
         });
     }
 
-    requestMessageText(req: ChatRequest): Promise<Response> {
+    protected requestMessageText(req: ChatRequest): Promise<Response> {
 
         return this.prisma.sent_messages.findUnique({
             where: {
@@ -143,7 +143,7 @@ export class ReplayCommandHandler extends BaseCommandHandler {
         };
     }
 
-    requestMessageConfirm(req: ChatRequest): Promise<Response> {
+    protected requestMessageConfirm(req: ChatRequest): Promise<Response> {
         const extrainfo = JSON.parse(req.chat.extra_info.toString());
         extrainfo.replay_body = req.text;
 
@@ -169,7 +169,7 @@ export class ReplayCommandHandler extends BaseCommandHandler {
         });
     }
 
-    replayMessage(req: ChatRequest): Promise<Response|Response[]> {
+    protected replayMessage(req: ChatRequest): Promise<Response|Response[]> {
         //req.data contiene "1" o "0"
         const extraInfo = JSON.parse(req.chat.extra_info.toString());
 

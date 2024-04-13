@@ -61,7 +61,7 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
         return res;
     }
 
-    private requestCourseId(req: ChatRequest): Promise<Response> {
+    protected requestCourseId(req: ChatRequest): Promise<Response> {
         //select all the courses teached by the professor
         req.chat.command = CourseMessageCommandHandler.command;
         req.chat.command_state = this.WAITING_FOR_COURSE_ID;
@@ -104,7 +104,7 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
             });
     }
 
-    private requestMessageBody(req: ChatRequest): Promise<Response> {
+    protected requestMessageBody(req: ChatRequest): Promise<Response> {
         const courseId = parseInt(req.data);
 
         return this.prisma.course.findUnique({
@@ -130,7 +130,7 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
 
     }
 
-    private requestConfirm(req: ChatRequest): Promise<Response> {
+    protected requestConfirm(req: ChatRequest): Promise<Response> {
         //il testo del messaggio è contenuto il req.text
         let extraInfo = JSON.parse(req.chat.extra_info.toString());
         extraInfo.messageBody = req.text;
@@ -162,7 +162,7 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
         });
     }
 
-    private getMessages(req: ChatRequest): Promise<Response|Response[]> {
+    protected getMessages(req: ChatRequest): Promise<Response|Response[]> {
         const confirm = parseInt(req.data);
         const extraInfo = JSON.parse(req.chat.extra_info.toString());
         if (!confirm) {

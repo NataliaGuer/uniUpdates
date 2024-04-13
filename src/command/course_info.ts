@@ -48,7 +48,7 @@ export class CourseInfoCommandHandler extends BaseCommandHandler {
         return res;
     }
 
-    private requestCourseId(chat: chat): Promise<Response> {
+    protected requestCourseId(chat: chat): Promise<Response> {
         chat.command = CourseInfoCommandHandler.command;
         chat.command_state = this.WAITING_FOR_COURSE_ID;
         chat.command_state_ordinal = 0;
@@ -60,7 +60,7 @@ export class CourseInfoCommandHandler extends BaseCommandHandler {
         });
     }
 
-    private getCourseInfo(req: ChatRequest): Promise<Response> {
+    protected getCourseInfo(req: ChatRequest): Promise<Response> {
         this.cleanChatState(req.chat);
 
         return this.prisma.course

@@ -4,6 +4,7 @@ import { Response } from "../api/response";
 import { MessageStatus, MessageType } from "../model/message";
 import { BaseCommandHandler, convState, messageTemplates } from "./base";
 import { renderFile } from "ejs";
+import { UserRole } from "../model/user";
 
 export class ToProfCommandHandler extends BaseCommandHandler {
     static command = "/toprof";
@@ -77,7 +78,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
         return res;
     }
 
-    private requestProfMail(req: ChatRequest): Promise<Response> {
+    protected requestProfMail(req: ChatRequest): Promise<Response> {
         /*
         imposta lo stato della conversazione a WAITING_FOR_PROF_MAIL
         controlla il numero di tentativi prima di richiedere la mail del professore
@@ -94,7 +95,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
         });
     }
 
-    private requestMessageType(req: ChatRequest): Promise<Response> {
+    protected requestMessageType(req: ChatRequest): Promise<Response> {
         /*
         controlla che esista un professore con la mail indicata
         imposta lo stato della conversazione a WAITING_FOR_MESSAGE_TYPE
@@ -104,6 +105,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
             .findUnique({
                 where: {
                     email: req.text,
+                    role: UserRole.professor
                 },
             })
             .then((user) => {
@@ -115,7 +117,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
             });
     }
 
-    private handleProfNotFound(chat: chat): Response {
+    protected handleProfNotFound(chat: chat): Response {
         if (chat.command_state_ordinal > this.convStates[this.WAITING_FOR_PROF_MAIL].maxTransitions) {
             this.cleanChatState(chat);
             return {
@@ -133,7 +135,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
         };
     }
 
-    private handleProfFound(chat: chat, profMail: string): Response {
+    protected handleProfFound(chat: chat, profMail: string): Response {
         chat.command_state = this.WAITING_FOR_MESSAGE_TYPE;
         chat.command_state_ordinal = 1;
         
@@ -157,7 +159,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
         };
     }
 
-    private requestMessage(req: ChatRequest): Promise<Response> {
+    protected requestMessage(req: ChatRequest): Promise<Response> {
         /*
         imposta lo stato della conversazione a WAITING_FOR_MESSAGE
         gestisce la risposta contenente il tipo di messaggio desiderato
@@ -191,7 +193,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
         });
     }
 
-    private requestConfirmation(req: ChatRequest): Promise<Response> {
+    protected requestConfirmation(req: ChatRequest): Promise<Response> {
         /*
         imposta lo stato della conversazione a WAITING_FOR_CONFIRMATION
         salva il testo del messaggio da inviare
@@ -232,7 +234,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
         });
     }
 
-    private handleConfirmation(req: ChatRequest): Promise<Response> {
+    protected handleConfirmation(req: ChatRequest): Promise<Response> {
         /*
         gestisce la selezione della conferma dell'invio del messaggio
         crea un nuovo record nella tabella message
