@@ -6,6 +6,22 @@ import { BaseCommandHandler, convState, messageTemplates } from "./base";
 import { renderFile } from "ejs";
 import { UserRole } from "../model/user";
 
+/**
+ * the class manages the sendind of a message from a student to a professor
+ * 
+    the flow works as follows:
+    1. the user uses the /toprof command to send a message
+    2. the bot asks for the professor’s email after checking the number of attempts
+            check that the professor exists
+            if it exists it continues
+            if it does not exist you go back to step 2 and increase the number of attempts
+    3. the bot asks for the type of message the user wants to send
+        (send answer with multiple choice)
+    4. the bot asks for the message the user wants to send
+    5. the bot asks for confirmation of all the operation: you confirm me that you want to send the message "..." to the
+    Professor "..." with the motivation "..."?
+    6. if the user confirms the message is saved otherwise the flow is interrupted and the command is deleted
+ */
 export class ToProfCommandHandler extends BaseCommandHandler {
     static command = "/toprof";
 
@@ -80,10 +96,9 @@ export class ToProfCommandHandler extends BaseCommandHandler {
 
     protected requestProfMail(req: ChatRequest): Promise<Response> {
         /*
-        imposta lo stato della conversazione a WAITING_FOR_PROF_MAIL
-        controlla il numero di tentativi prima di richiedere la mail del professore
+        sets the chat status to WAITING_FOR_PROF_MAIL
+        checks the number of attempts before requesting the professor's email
         */
-
         req.chat.command = ToProfCommandHandler.command;
         req.chat.command_state = this.WAITING_FOR_PROF_MAIL;
         req.chat.command_state_ordinal++;
@@ -96,10 +111,11 @@ export class ToProfCommandHandler extends BaseCommandHandler {
     }
 
     protected requestMessageType(req: ChatRequest): Promise<Response> {
+
         /*
-        controlla che esista un professore con la mail indicata
-        imposta lo stato della conversazione a WAITING_FOR_MESSAGE_TYPE
-        restituisce una risposta con le opzioni per il tipo di messaggio
+        checks the existence of a prof with the specified email address
+        sets the state of the conversation to WAITING_FOR_MESSAGE_TYPE
+        returns a response with the options for the message type
         */
         return this.prisma.user
             .findUnique({
@@ -112,7 +128,6 @@ export class ToProfCommandHandler extends BaseCommandHandler {
                 if (!user) {
                     return this.handleProfNotFound(req.chat);
                 }
-                //ho trovato il professore
                 return this.handleProfFound(req.chat, req.text);
             });
     }
@@ -161,11 +176,11 @@ export class ToProfCommandHandler extends BaseCommandHandler {
 
     protected requestMessage(req: ChatRequest): Promise<Response> {
         /*
-        imposta lo stato della conversazione a WAITING_FOR_MESSAGE
-        gestisce la risposta contenente il tipo di messaggio desiderato
-        salva il tipo di messaggio negli extra data
-        richiede il testo del messaggio da inviare
-        */
+        sets the conversation status to WAITING_FOR_MESSAGE
+        handles the response, containing the desired type of message
+        saves the type of message in the extra data
+        requests the text of the message to be sent
+         */
         const messageTypes: number[] = [];
         for (let key in MessageType) {
             messageTypes.push(MessageType[key].id);
@@ -181,7 +196,7 @@ export class ToProfCommandHandler extends BaseCommandHandler {
 
         req.chat.command_state = this.WAITING_FOR_MESSAGE;
         req.chat.command_state_ordinal++;
-        
+
         let extraInfo = JSON.parse(req.chat.extra_info.toString());
         extraInfo.type = parseInt(req.data);
         req.chat.extra_info = extraInfo;
@@ -195,23 +210,21 @@ export class ToProfCommandHandler extends BaseCommandHandler {
 
     protected requestConfirmation(req: ChatRequest): Promise<Response> {
         /*
-        imposta lo stato della conversazione a WAITING_FOR_CONFIRMATION
-        salva il testo del messaggio da inviare
-        restituisce una risposta con le opzioni per confermare l'invio
-        ricapitolando il professore che riceverà il messaggio e il messaggio stesso
+        sets the conversation status to WAITING_FOR_CONFIRMATION
+        saves the text of the message to be sent
+        returns a response with the options for the confirmation
         */
         req.chat.command_state = this.WAITING_FOR_CONFIRMATION;
         req.chat.command_state_ordinal = 1;
-        
+
         let extraInfo = JSON.parse(req.chat.extra_info.toString());
         extraInfo.messageText = req.text;
         //we save the id of the message to which the professor will replay
         extraInfo.messageId = req.message_id;
-        
+
         req.chat.extra_info = extraInfo;
         this.updateChatState(req.chat);
 
-        //utilizzo di un template per la richiesta della conferma
         return renderFile(this.templates.confirm, {
             message: req.text,
             profMail: req.chat.extra_info["to"],
@@ -236,9 +249,9 @@ export class ToProfCommandHandler extends BaseCommandHandler {
 
     protected handleConfirmation(req: ChatRequest): Promise<Response> {
         /*
-        gestisce la selezione della conferma dell'invio del messaggio
-        crea un nuovo record nella tabella message
-        restituisce un messaggio di conferma dell'invio
+        handles the confirmation of the message sending
+        creates a new record in the message table
+        returns a confirmation message
         */
         const res = parseInt(req.data);
         if (res === 1) {

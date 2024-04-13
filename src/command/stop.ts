@@ -3,7 +3,7 @@ import { Response } from "../api/response";
 import { BaseCommandHandler } from "./base";
 
 /**
- * interrompe il comando in esecuzione
+ * stops the running command, cleaning the chat state
  */
 export class StopCommandHandler extends BaseCommandHandler {
     static command = "/stop";

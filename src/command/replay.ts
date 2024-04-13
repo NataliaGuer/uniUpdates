@@ -4,6 +4,25 @@ import { Response } from "../api/response";
 import { BaseCommandHandler, convState } from "./base";
 import { renderFile } from "ejs";
 
+/**
+ * this class handles the replay to a student procedure
+ * the professor that received a message from a student can use this command to send a replay
+ * 
+ * the flow for this command is
+    1.the user selects the /replay command
+    1.1 the bot asks for the message id
+    1.2 the user sends the message id
+    (at this point a check on the message id is performed,
+    if there isn't a message with the specified id we go back to step 1.1
+    with an alert message warning the user that the message does not exists 
+    )
+    2. the bot asks for the replay text
+    2.1 the user sends the replay text
+    3. the bot asks to confirm
+    3.1 the user confirms the replay
+
+    if the user doesn't confirm the replay the message, the command is cancelled
+ */
 export class ReplayCommandHandler extends BaseCommandHandler {
 
     private WAITING_FOR_MESSAGE_ID = 1;
@@ -29,23 +48,6 @@ export class ReplayCommandHandler extends BaseCommandHandler {
     templates = {
         toStudent: this.getTemplate("to_student"),
     };
-
-    /*
-    the flow for this command is
-    1.the user selects the /replay command
-    1.1 the bot asks for the message id
-    1.2 the user sends the message id
-    (at this point a check on the message id is performed,
-    if there isn't a message with the specified id we go back to step 1.1
-    with an alert message warning the user that the message does not exists 
-    )
-    2. the bot asks for the replay text
-    2.1 the user sends the replay text
-    3. the bot asks to confirm
-    3.1 the user confirms the replay
-
-    if the user doesn't confirm the replay the message, the command is cancelled
-    */
 
     handle(req: ChatRequest): Promise<Response|Response[]> {
         let res: Promise<Response|Response[]>;
@@ -127,7 +129,7 @@ export class ReplayCommandHandler extends BaseCommandHandler {
     }
 
     protected handleMessageFound(chat: chat, message: sent_messages): Response {
-        //inserimento dell'id del messaggio in extrainfo
+        //we insert message.id in the chat extra info for later use
         chat.extra_info = {
             message_id: message.id,
         };
@@ -170,7 +172,7 @@ export class ReplayCommandHandler extends BaseCommandHandler {
     }
 
     protected replayMessage(req: ChatRequest): Promise<Response|Response[]> {
-        //req.data contiene "1" o "0"
+        //req.data is "1" or "0"
         const extraInfo = JSON.parse(req.chat.extra_info.toString());
 
         if (req.data) {
@@ -182,7 +184,7 @@ export class ReplayCommandHandler extends BaseCommandHandler {
                 });
             }
 
-            //ottenimento dei dati del messaggio
+            //message data retrieval
             return this.prisma.sent_messages.findUnique({
                 where: {
                     id: parseInt(extraInfo.message_id),

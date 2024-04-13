@@ -78,20 +78,13 @@ export class CommandDirectory {
         }
     };
 
-    /**
-     * contiene le chiavi dei comandi che sono disponibili per l'utente
-     * non autenticato
-     */
     private anonymousUserCommands: string[] = [
         StartCommandHandler.command,
         AuthenticateCommandHandler.command,
         StopCommandHandler.command,
     ];
 
-    /**
-     * contiene le chiavi dei comandi che sono disponibili per l'utente
-     * autenticato con ruolo di studente
-     */
+    
     private studentCommands: string[] = [
         ...this.anonymousUserCommands,
         ListCoursesCommandHandler.command,

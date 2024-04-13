@@ -5,6 +5,10 @@ import { BaseCommandHandler, convState } from "./base";
 import { renderFile } from "ejs";
 import { UnfollowCommandHandler } from "./unfollow";
 
+/**
+ * this class is responsible of the management of the /follow command, through which the student
+ * can receive notification whenever the professor teaching the specified course sends updates.
+ */
 export class FollowCommandHandler extends BaseCommandHandler {
     static command = "/follow";
     templatesFolder = "follow";
@@ -52,6 +56,7 @@ export class FollowCommandHandler extends BaseCommandHandler {
     }
 
     protected setFollowing(req: ChatRequest): Promise<Response> {
+        //we create a record in the attendance table to link the student to the course
         return this.prisma.user.update({
             where: {
                 chat_id: req.chat.id

@@ -14,7 +14,7 @@ export class Dispatcher {
     }
 
     dispatch(req: Request): Promise<Response|Response[]> {
-        //ottenimento della chat o sua creazione
+        //we retieve or create a chat instance
         let chatPromise = this.prisma.chat
             .findUnique({
                 where: {
@@ -39,11 +39,6 @@ export class Dispatcher {
 
             let command = this.getCommandInstance(chatReq);
             
-            /*
-            nel caso l'utente non sia autneticato il comando che
-            ha richiesto viene sostituito da quello per l'autenticazione
-            altrimenti viene letto l'utente e inserito nella richiesta
-            */
             if (!this.isAuthenticated(chatReq)) {
                 command = new AuthenticateCommandHandler();
                 try {
@@ -82,7 +77,7 @@ export class Dispatcher {
     private getCommandInstance(
         chatReq: ChatRequest
     ): BaseCommandHandler | null {
-        //commandString è null quando il testo non è un comando e non era precedentemente in esecuzione un comando
+        //commadString is null when the text isn't a command and there wasn't any commad running previously
         let commandString: string | null = this.isCommandRequest(chatReq)
             ? chatReq.text
             : chatReq.chat.command;

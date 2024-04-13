@@ -14,7 +14,7 @@ config({
     ]
 });
 
-//queste costanti devono stare esattamente qua
+//the position of these constants is really important, don't move them
 const { TG_TOKEN, APP_HOST } = process.env;
 const APP_PORT = parseInt(process.env.APP_PORT);
 const telegram_api = `https://api.telegram.org/bot${TG_TOKEN}`;
@@ -47,6 +47,8 @@ app.post(uri, async (req: Request, res: Response, next: NextFunction) => {
     let chat;
     let messageId;
 
+    //this section handles different types of messages: direct messages and responses through options
+    //shown by the bot
     if (req.body.hasOwnProperty("message")) {
         messageBody = req.body.message;
         chat = req.body.message.chat;
@@ -67,6 +69,11 @@ app.post(uri, async (req: Request, res: Response, next: NextFunction) => {
             message_id: messageId
         })
         .then((responses) => {
+            /*
+            different commands can return both an array and a single response,
+            to handle these different type uniformly we create an array when the
+            command returns a single response
+            */
             if (!(responses instanceof Array)) {
                 responses = [responses];
             }

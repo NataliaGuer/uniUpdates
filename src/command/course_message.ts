@@ -5,7 +5,15 @@ import { BaseCommandHandler, convState } from "./base";
 import { renderFile } from "ejs";
 
 /**
- * permits to send messages to all the student that are following a specific course
+ * permits to send messages to all the student that are following a specific course,
+ * the steps are: 
+ * 1. the professor selects the command
+ * 2. the bot asks to chose the course from the list of the courses teached by the professor (not finished)
+ * 2.1 the professor choses one course
+ * 3. the bot asks for the message body
+ * 3.1 the professor sends the body
+ * 4. the bot asks to confirm the send
+ * (n messages are sent, one for each student following the specified course and one to the professor to confirm the sending)
  */
 export class CourseMessageCommandHandler extends BaseCommandHandler {
     private WAITING_FOR_COURSE_ID = 1;
@@ -25,17 +33,6 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
             maxTransitions: 1,
         },
     };
-
-    /**
-     * the states of the conversation are:
-     * 1. the professor selects the command
-     * 2. the bot asks to chose the course from the list of the courses teached by the professor (not finished)
-     * 2.1 the professor choses one course
-     * 3. the bot asks for the message body
-     * 3.1 the professor sends the body
-     * 4. the bot asks to confirm the send
-     * (n messages are sent, one for each student following the specified course and one to the professor to confirm the sent)
-     */
 
     templatesFolder = "course_message";
     templates = {
@@ -131,7 +128,7 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
     }
 
     protected requestConfirm(req: ChatRequest): Promise<Response> {
-        //il testo del messaggio è contenuto il req.text
+
         let extraInfo = JSON.parse(req.chat.extra_info.toString());
         extraInfo.messageBody = req.text;
 

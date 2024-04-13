@@ -18,6 +18,20 @@ interface filters {
     };
 }
 
+/**
+ * the class is responsible for the retrieving of the messages sent to a professor by the students
+ * the states of the conversation are
+        1. the user selects the command
+        1.1 the bot asks if you want to display new or old messages
+        1.2 the user chooses a message type
+        2. the bot shows in number of messages and filters
+        2.1 waiting for filter selection
+        3. filter management
+        (once the user has selected a certain filter must be
+        invoked the method that handles that particular filter)
+        4. obtaining the filtered results
+        5. the displayed results are set to read
+ */
 export class GetMessagesCommandHandler extends BaseCommandHandler {
     static command = "/getmessages";
 
@@ -56,19 +70,6 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
     };
 
     handle(req: ChatRequest): Promise<Response> {
-        /*
-        gli stati della conversazione sono
-        1. l'utente seleziona il comando
-        1.1 il bot chiede se si vogliono visualizzare i messaggi nuovi o vecchi
-        1.2 l'utente sceglie un tipo di messaggio
-        2. il bot mostra in numero di messaggi e i filtri
-        2.1 attesa della selezione dei filtri
-        3. gestione del filtro
-        (una volta che l'utente ha selezionato un determinato filtro deve essere
-        invocato il metodo che si occupa di gestire quel determinato filtro)
-        4. ottenimento dei risultati filtrati
-        5. i risultati visualizzati vengono messi in stato read
-        */
 
         let res: Promise<Response>;
         switch (req.chat.command_state) {
@@ -127,8 +128,6 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
             },
         });
 
-        //l'attributo di classe che contiene i filtri disponibili viene mappato in un array
-        //formattato in modo che possa essere utilizzato nel template
         let mappedFilters = [];
         for (const [key, value] of Object.entries(this.availableFilters)) {
             mappedFilters.push({

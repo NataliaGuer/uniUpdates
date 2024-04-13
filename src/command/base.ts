@@ -4,6 +4,10 @@ import { chat } from "@prisma/client";
 import { PrismaClientWrapper } from "../utils/db/prismaWrapper";
 import path from "path";
 
+/**
+ * The base class that exposes the interface to handle the commands
+ * that can be submissed to the bot.
+ */
 export abstract class BaseCommandHandler {
     protected prisma: PrismaClientWrapper;
     INITIAL_STATE = null;
@@ -35,8 +39,8 @@ export abstract class BaseCommandHandler {
     }
 
     /**
-     * il metodo permette di azzerare lo stato della chat, ad esempio 
-     * a seguito del verificarsi di un errore bloccante
+     * this method permits to set the chat status to the initial value,
+     * as example, when there was an error or the command execution is completed
      * @param chat 
      */
     protected cleanChatState(chat: chat): void {

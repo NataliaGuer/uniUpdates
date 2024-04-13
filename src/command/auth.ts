@@ -4,6 +4,22 @@ import { Response } from "../api/response";
 import { BaseCommandHandler, convState } from "./base";
 import { MailServiceWrapper } from "../utils/mail/sendgridWrapper";
 
+/**
+ * This class handles the authentication process, the steps are:
+ * 1. the user interact with the bot for the fitst time (the chat he/she is using isn't associated to any user)
+ *      or selects the /auth command
+ * 2. the bot asks for the user's email address
+ * 3. the user submits his/her email address
+ * 4. the bot checks if there is a match between the provided mail and a user in the DB
+ * 5. the bot asks for confirmation
+ * 6. the user confirms
+ * 7. the bot creates and sends a token
+ * 8. the user checks his/her email address and sends the token to the bot
+ * 9. the bot checks if there is a match between the provided token and the one it saved during step 7
+ * 10. the bot associates the user to the chat
+ * now the user is authenticated and authorized, he/she can use the set of commands related to his/her role
+ * 
+ */
 export class AuthenticateCommandHandler extends BaseCommandHandler {
     static command = "/auth";
     templatesFolder: string;
@@ -23,19 +39,7 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
             maxTransitions: 1,
         }
     };
-
-    //gli step dell'autenticazione sono:
-    //- l'utente seleziona il comando /authenticate
-    //- il bot chiede la mail
-    //- l'utente fornisce la mail
-    //- il bot chiede conferma della mail
-    //- invio un codice alla mail indicata
-    //- salvo il codice in una apposita tabella
-    //- il bot chiede il codice
-    //- l'utente fornisce il codice
-    //- verifico che il codice sia quello atteso
-    //- imposto lo stato della chat come autenticata
-
+    
     handle(req: AuthenticationRequest): Promise<Response> {
         let res: Promise<Response>;
         switch (req.chat.command_state) {
@@ -43,7 +47,6 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
                 res = this.requestMail(req.chat);
                 break;
             case this.WAITING_FOR_MAIL:
-                //l'utente invia la mail e causa il cambiamento di stato
                 res = this.requestMailConfirmation(req.chat, req.text);
                 break;
             case this.WAITING_FOR_MAIL_CONFIRMATION:
@@ -104,7 +107,7 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
             });
         }
 
-        //controllo se esiste un utente con la mail fornita
+        //check that the provided mail is associated to a user in the DB
         return this.prisma.user
             .findUnique({
                 where: {
@@ -113,10 +116,7 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
             })
             .then((user) => {
                 if (!user) {
-                    //chiedo un altra email
-                    chat.command_state = this.WAITING_FOR_MAIL;
-                    chat.command_state_ordinal = 1;
-                    this.updateChatState(chat);
+                    this.cleanChatState(chat);
 
                     return {
                         success: false,
@@ -148,14 +148,12 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
     protected checkEmailConfirmation(
         req: AuthenticationRequest
     ): Promise<Response> {
-        //controllo che la richiesta contenga data
         if (req.data) {
             if (req.data === "1") {
-                //ha confermato la mail, mando il token e imposto lo
-                //stato della chat in attesa del token
                 const extrainfo = JSON.parse(req.chat.extra_info.toString());
                 const token = this.sendToken(extrainfo.emailToConfirm);
 
+                //the generated and sent token is saved for future check
                 extrainfo.token = token;
                 req.chat.command_state = this.WAITING_FOR_TOKEN;
                 req.chat.command_state_ordinal = 1;
@@ -182,10 +180,11 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
     protected checkToken(req: AuthenticationRequest): Promise<Response> {
         const extraInfo = JSON.parse(req.chat.extra_info.toString());
         
-        //se il token è corretto lo inserisco nella chat
+        //we check the correctness of the submitted token
         if (extraInfo.token && req.text === extraInfo.token) {
             
-            //modifica dell'utente, inserimento id chat
+            //user update, now we have a link between the user and the chat she/he is using 
+            //to talk with the bot
             this.prisma.user.update({
                 where: {
                     email: extraInfo.emailToConfirm
@@ -210,7 +209,7 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
             });
         }
 
-        //se il token non è valido interrompo il processo di autenticazione
+        //if the token isn't valid, the auth process is interrupted
         this.cleanChatState(req.chat);
 
         return this.wrapResponseInPromise({

@@ -5,6 +5,9 @@ import { BaseCommandHandler } from "./base";
 import { renderFile } from "ejs";
 import { FollowCommandHandler } from "./follow";
 
+/**
+ * This class handles the request of informations about a specific course (given its id)
+ */
 export class CourseInfoCommandHandler extends BaseCommandHandler {
     static command = "/courseinfo";
     templatesFolder = "course_info";
