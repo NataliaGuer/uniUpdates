@@ -4,6 +4,7 @@ import { Response } from "../api/response";
 import { BaseCommandHandler, convState } from "./base";
 import { renderFile } from "ejs";
 import { UnfollowCommandHandler } from "./unfollow";
+import { ListFollowingCommandHandler } from "./list_following";
 
 /**
  * this class is responsible of the management of the /follow command, through which the student
@@ -70,7 +71,13 @@ export class FollowCommandHandler extends BaseCommandHandler {
             }
         })
         .then((user) => {
-            return renderFile(this.templates.follow, {unfollow: UnfollowCommandHandler.command})
+            return renderFile(
+                this.templates.follow, 
+                {
+                    unfollow: UnfollowCommandHandler.command,
+                    following: ListFollowingCommandHandler.command
+                }
+            )
             .then((html) => {
                 return {
                     success: true,

@@ -1,3 +1,4 @@
+import { user } from "@prisma/client";
 import { AuthenticateCommandHandler, BaseCommandHandler } from "../command";
 import { PrismaClientWrapper } from "../utils/db/prismaWrapper";
 import { CommandDirectory } from "./command_directory";
@@ -13,7 +14,7 @@ export class Dispatcher {
         this.commandDirectory = new CommandDirectory();
     }
 
-    dispatch(req: Request): Promise<Response|Response[]> {
+    dispatch(req: Request): Promise<Response | Response[]> {
         //we retieve or create a chat instance
         let chatPromise = this.prisma.chat
             .findUnique({
@@ -38,29 +39,41 @@ export class Dispatcher {
             const chatReq = { ...req, chat: chat };
 
             let command = this.getCommandInstance(chatReq);
-            
+
             if (!this.isAuthenticated(chatReq)) {
                 command = new AuthenticateCommandHandler();
                 try {
                     return command.handle(chatReq);
                 } catch (error) {
                     console.log(error);
-                    
+
                     return {
                         success: false,
-                        text: "Errore interno"
-                    }
+                        text: "Errore interno",
+                    };
                 }
             } else if (command) {
-                return this.prisma.user
-                    .findUnique({
+                if (this.isCommandRequest(chatReq) && chatReq.chat.command !== null) {
+                    this.prisma.chat.update({
                         where: {
-                            chat_id: chat.id,
+                            id: chat.id,
+                        },
+                        data: {
+                            command: null,
+                            command_state: null,
+                            command_state_ordinal: 0,
+                            extra_info: {},
                         },
                     })
-                    .then((user) => {
-                        return command.handle({ ...chatReq, user: user });
-                    });
+                    .then((res) => {
+                    })
+                    
+                    chatReq.chat.command = null;
+                    chatReq.chat.command_state = null;
+                    chatReq.chat.extra_info = "";
+                }
+
+                return this.dispatchCommand(command, chat.id, chatReq);
             }
 
             return Promise.resolve({
@@ -70,17 +83,25 @@ export class Dispatcher {
         });
     }
 
+    private dispatchCommand(command: BaseCommandHandler, chatId: string, req: ChatRequest): Promise<Response|Response[]> {
+        return this.prisma.user
+            .findUnique({
+                where: {
+                    chat_id: chatId,
+                },
+            })
+            .then((user) => {
+                return command.handle({ ...req, user: user });
+            });
+    }
+
     private isCommandRequest(req: Request): boolean {
         return !!req.text && req.text.startsWith("/");
     }
 
-    private getCommandInstance(
-        chatReq: ChatRequest
-    ): BaseCommandHandler | null {
+    private getCommandInstance(chatReq: ChatRequest): BaseCommandHandler | null {
         //commadString is null when the text isn't a command and there wasn't any commad running previously
-        let commandString: string | null = this.isCommandRequest(chatReq)
-            ? chatReq.text
-            : chatReq.chat.command;
+        let commandString: string | null = this.isCommandRequest(chatReq) ? chatReq.text : chatReq.chat.command;
 
         const constructor = this.commandDirectory.getConstructor(commandString);
 

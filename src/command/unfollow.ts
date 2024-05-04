@@ -2,10 +2,15 @@ import { chat } from "@prisma/client";
 import { ChatRequest } from "../api/request";
 import { Response } from "../api/response";
 import { BaseCommandHandler, convState } from "./base";
+import { renderFile } from "ejs";
+import { ListFollowingCommandHandler } from "./list_following";
 
 export class UnfollowCommandHandler extends BaseCommandHandler {
     static command = "/unfollow";
-    templatesFolder: string;
+    templatesFolder = "unfollow";
+    templates = {
+        unfollow: this.getTemplate("unfollow"),
+    };
 
     private WAITING_FOR_COURSE_ID = 0;
 
@@ -56,10 +61,19 @@ export class UnfollowCommandHandler extends BaseCommandHandler {
             }
         })
         .then((user) => {
-            return {
-                success: true,
-                text: "Hai smesso di seguire il corso",
-            }
+            return renderFile(
+                this.templates.unfollow, 
+                {
+                    following: ListFollowingCommandHandler.command
+                }
+            )
+            .then((html) => {
+                return {
+                    success: true,
+                    text: html,
+                    parseMode: "HTML"
+                }
+            })
         })
         .catch((error) => {
             return {
