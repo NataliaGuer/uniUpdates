@@ -1,5 +1,5 @@
-import {Response} from "../api/response";
-import {ChatRequest} from "../api/request";
+import { Response } from "../api/response";
+import { ChatRequest } from "../api/request";
 import { chat } from "@prisma/client";
 import { PrismaClientWrapper } from "../utils/db/prismaWrapper";
 import path from "path";
@@ -9,87 +9,82 @@ import path from "path";
  * that can be submissed to the bot.
  */
 export abstract class BaseCommandHandler {
-    protected prisma: PrismaClientWrapper;
-    INITIAL_STATE = null;
-    templates: messageTemplates;
+  protected prisma: PrismaClientWrapper;
+  INITIAL_STATE = null;
+  templates: messageTemplates;
 
-    static command: string;
-    abstract convStates: convState | null;
-    abstract templatesFolder: string | null;
-    abstract handle(req: ChatRequest): Promise<Response|Response[]>;
+  static command: string;
+  abstract convStates: convState | null;
+  abstract templatesFolder: string | null;
+  abstract handle(req: ChatRequest): Promise<Response | Response[]>;
 
-    constructor() {
-        this.prisma = PrismaClientWrapper.getInstance();
-    }
+  constructor() {
+    this.prisma = PrismaClientWrapper.getInstance();
+  }
 
-    protected updateChatState(newChat: chat): void {
-        this.prisma.chat.update({
-            where: {
-                id: newChat.id,
-            },
-            data: {
-                token: newChat.token,
-                command: newChat.command,
-                command_state: newChat.command_state,
-                command_state_ordinal: newChat.command_state_ordinal,
-                extra_info: JSON.stringify(newChat.extra_info),
-            },
-        })
-        .then(res => {})
-    }
+  protected updateChatState(newChat: chat): void {
+    this.prisma.chat
+      .update({
+        where: {
+          id: newChat.id,
+        },
+        data: {
+          token: newChat.token,
+          command: newChat.command,
+          command_state: newChat.command_state,
+          command_state_ordinal: newChat.command_state_ordinal,
+          extra_info: JSON.stringify(newChat.extra_info),
+        },
+      })
+      .then((res) => {});
+  }
 
-    protected parseChatExtraInfo(chat: chat) {
-        return JSON.parse(chat.extra_info.toString());
-    }
+  protected parseChatExtraInfo(chat: chat) {
+    return JSON.parse(chat.extra_info.toString());
+  }
 
-    /**
-     * this method permits to set the chat status to the initial value,
-     * as example, when there was an error or the command execution is completed
-     * @param chat 
-     */
-    protected cleanChatState(chat: chat): void {
-        this.prisma.chat.update({
-            where: {
-                id: chat.id,
-            },
-            data: {
-                command: null,
-                command_state: this.INITIAL_STATE,
-                command_state_ordinal: 0,
-                extra_info: {},
-            },
-        })
-        .then(res => {})
-    }
+  /**
+   * this method permits to set the chat status to the initial value,
+   * as example, when there was an error or the command execution is completed
+   * @param chat
+   */
+  protected cleanChatState(chat: chat): void {
+    this.prisma.chat
+      .update({
+        where: {
+          id: chat.id,
+        },
+        data: {
+          command: null,
+          command_state: this.INITIAL_STATE,
+          command_state_ordinal: 0,
+          extra_info: JSON.stringify({}),
+        },
+      })
+      .then((res) => {});
+  }
 
-    protected wrapResponseInPromise(res: Response): Promise<Response> {
-        return new Promise<Response>((resolve, reject) => {
-            resolve(res);
-        });
-    }
+  protected wrapResponseInPromise(res: Response): Promise<Response> {
+    return new Promise<Response>((resolve, reject) => {
+      resolve(res);
+    });
+  }
 
-    protected getTemplate(templateName: string): string {
-        return path.join(
-            __dirname,
-            "..",
-            "..",
-            "view",
-            this.templatesFolder,
-            `${templateName}.ejs`
-        );
-    }
+  protected getTemplate(templateName: string): string {
+    return path.join(__dirname, "..", "..", "view", this.templatesFolder, `${templateName}.ejs`);
+  }
 }
 
 export interface convState {
-    [key: number]: {
-        maxTransitions: number;
-    }
+  [key: number]: {
+    maxTransitions: number;
+  };
 }
 
 export interface messageTemplates {
-    [key: string]: string;
+  [key: string]: string;
 }
 
 export interface CommandHandlerConstructor {
-    new(): BaseCommandHandler;
+  new (): BaseCommandHandler;
 }

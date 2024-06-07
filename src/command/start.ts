@@ -9,33 +9,32 @@ import { CommandDirectory } from "../api/command_directory";
  * authenticated user
  */
 export class StartCommandHandler extends BaseCommandHandler {
-    static command: string = "/start";
-    
-    convStates = null;
-    templatesFolder = 'start';
+  static command: string = "/start";
 
-    commandDirectory: CommandDirectory;
+  convStates = null;
+  templatesFolder = "start";
 
-    templates: messageTemplates = {
-        main: this.getTemplate("main")
-    };
+  commandDirectory: CommandDirectory;
 
-    constructor(){
-        super();
-        this.commandDirectory = new CommandDirectory();
-    }
+  templates: messageTemplates = {
+    main: this.getTemplate("main"),
+  };
 
-    handle(req: ChatRequest): Promise<Response> {
-        //there are different commands for diffent user's role
-        const commands = this.commandDirectory.getCommandList(req.user);
-        
-        return renderFile(this.templates.main, {commands: commands})
-        .then((html) => {
-            return {
-                success: true,
-                text: html,
-                parseMode: "HTML"
-            }
-        })
-    }
+  constructor() {
+    super();
+    this.commandDirectory = new CommandDirectory();
+  }
+
+  handle(req: ChatRequest): Promise<Response> {
+    //there are different commands for diffent user's role
+    const commands = this.commandDirectory.getCommandList(req.user);
+
+    return renderFile(this.templates.main, { commands: commands }).then((html) => {
+      return {
+        success: true,
+        text: html,
+        parseMode: "HTML",
+      };
+    });
+  }
 }

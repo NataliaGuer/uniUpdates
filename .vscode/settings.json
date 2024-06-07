@@ -4,5 +4,6 @@
             "language": "typescript",
             "scheme": "file"
         }
-    ]
+    ],
+    "editor.formatOnSave": true
 }
