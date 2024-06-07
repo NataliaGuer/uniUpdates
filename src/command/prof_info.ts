@@ -3,6 +3,7 @@ import { ChatRequest } from "../api/request";
 import { Response } from "../api/response";
 import { BaseCommandHandler, convState, messageTemplates } from "./base";
 import { renderFile } from "ejs";
+import { UserRole } from "../model/user";
 
 export class ProfinfoCommandHandler extends BaseCommandHandler {
     
@@ -61,7 +62,8 @@ export class ProfinfoCommandHandler extends BaseCommandHandler {
             where: {
                 name: {
                     contains: req.text
-                }
+                },
+                role: UserRole.professor
             },
             select: {
                 email: true,

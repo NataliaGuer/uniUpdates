@@ -109,7 +109,7 @@ app.post(uri, async (req: Request, res: Response, next: NextFunction) => {
     
                 let responsePromise = axios.post(`${telegram_api}/sendMessage`, responseMessage, {timeout: 5000})
                 .catch((err) => {
-                    console.log("errore");
+                    console.log(err);
                 })
 
                 promises.push(responsePromise);

@@ -24,7 +24,7 @@ export class UnfollowCommandHandler extends BaseCommandHandler {
         let res: Promise<Response>;
         switch (req.chat.command_state) {
             case this.INITIAL_STATE:
-                res = this.requestCourseId(req.chat);
+                res = this.requestCourseId(req);
                 break;
             case this.WAITING_FOR_COURSE_ID:
                 res = this.removeFollow(req);
@@ -36,10 +36,24 @@ export class UnfollowCommandHandler extends BaseCommandHandler {
         return res;
     }
 
-    protected requestCourseId(chat: chat): Promise<Response> {
-        chat.command = UnfollowCommandHandler.command;
-        chat.command_state = this.WAITING_FOR_COURSE_ID;
-        this.updateChatState(chat);
+    protected requestCourseId(req: ChatRequest): Promise<Response> {
+        this.prisma.attendance.findMany({
+            where: {
+                student: req.user.email
+            },
+        })
+        .then((res) => {
+            if (res) {
+                let coursesId = res.map((att) => att.course);
+                let extraInfo = this.parseChatExtraInfo(req.chat);
+                extraInfo.selectable = coursesId;
+                req.chat.extra_info = extraInfo;
+            }
+            req.chat.command = UnfollowCommandHandler.command;
+            req.chat.command_state = this.WAITING_FOR_COURSE_ID;
+    
+            this.updateChatState(req.chat);
+        })
 
         return this.wrapResponseInPromise({
             success: true,
@@ -48,6 +62,17 @@ export class UnfollowCommandHandler extends BaseCommandHandler {
     }
 
     protected removeFollow(req: ChatRequest): Promise<Response> {
+
+        const selectedCourse = parseInt(req.text);
+        const extraInfo = this.parseChatExtraInfo(req.chat);
+
+        if (!extraInfo.selectable.includes(selectedCourse)) {
+            return this.wrapResponseInPromise({
+                success: false,
+                text: "Sembra che tu non stia seguendo il corso selezionato, prova a controllare l'id.",
+            });
+        }
+        
         return this.prisma.user.update({
             where: {
                 chat_id: req.chat.id

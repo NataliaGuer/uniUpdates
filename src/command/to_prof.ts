@@ -30,22 +30,6 @@ export class ToProfCommandHandler extends BaseCommandHandler {
     WAITING_FOR_MESSAGE = 2;
     WAITING_FOR_CONFIRMATION = 3;
 
-    /*
-    il flusso funziona come segue:
-    1. l'utente utilizza il comando /toprof per inviare un messaggio
-    2. il bot chiede la mail del professore dopo aver controllato il numero di tentativi
-            controlla che il professore esista
-            se esiste si continua
-            se non esiste si torna al punto 2 e si incremente il numero di tentativi
-    3. il bot chiede il tipo di messaggio che l'utente vuole inviare
-        (inviare risposta con scelta multipla)
-    4. il bot chiede il messaggio che l'utente vuole inviare
-    5. il bot chiede conferma di tutta l'operazione: mi confermi che vuoi inviare il messaggio "..." al
-    professore "..." con la motivazione "..."?
-    6. se l'utente conferma il messaggio viene salvato altrimenti il flusso viene interrotto e
-    il comando viene cancellato
-    */
-
     convStates: convState = {
         [this.WAITING_FOR_PROF_MAIL]: {
             maxTransitions: 3,

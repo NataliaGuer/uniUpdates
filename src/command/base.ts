@@ -38,6 +38,10 @@ export abstract class BaseCommandHandler {
         .then(res => {})
     }
 
+    protected parseChatExtraInfo(chat: chat) {
+        return JSON.parse(chat.extra_info.toString());
+    }
+
     /**
      * this method permits to set the chat status to the initial value,
      * as example, when there was an error or the command execution is completed
