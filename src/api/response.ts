@@ -1,13 +1,13 @@
 export interface Response {
-    success: boolean;
-    text?: string;
-    options?: ResponseOption[];
-    parseMode?: string;
-    toChat?: number;
-    replayToMessage?: number;
+  success: boolean;
+  text?: string;
+  options?: ResponseOption[];
+  parseMode?: string;
+  toChat?: number;
+  replayToMessage?: number;
 }
 
 export interface ResponseOption {
-    text: string;
-    data: string;
+  text: string;
+  data: string;
 }

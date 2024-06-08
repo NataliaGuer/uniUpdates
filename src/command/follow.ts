@@ -29,7 +29,7 @@ export class FollowCommandHandler extends BaseCommandHandler {
     let res: Promise<Response>;
     switch (req.chat.command_state) {
       case this.INITIAL_STATE:
-        res = this.requestCourseId(req.chat);
+        res = this.requestCourseId(req);
         break;
       case this.WAITING_FOR_COURSE_ID:
         res = this.setFollowing(req);
@@ -44,18 +44,53 @@ export class FollowCommandHandler extends BaseCommandHandler {
     return res;
   }
 
-  protected requestCourseId(chat: chat): Promise<Response> {
-    chat.command = FollowCommandHandler.command;
-    chat.command_state = this.WAITING_FOR_COURSE_ID;
-    this.updateChatState(chat);
+  protected requestCourseId(req: ChatRequest): Promise<Response> {
+    return this.prisma.attendance
+      .findMany({
+        where: {
+          student: req.user.email,
+        },
+      })
+      .then((res) => {
+        const alreadyFollowing = res.map((att) => att.course);
+        const extraInfo = this.getChatExtraInfo(req.chat);
+        extraInfo["alreadyFollowing"] = alreadyFollowing;
 
-    return this.wrapResponseInPromise({
-      success: true,
-      text: "OK! scrivimi l'id del corso che desideri seguire",
-    });
+        req.chat.extra_info = extraInfo;
+        req.chat.command = FollowCommandHandler.command;
+        req.chat.command_state = this.WAITING_FOR_COURSE_ID;
+
+        this.updateChatState(req.chat);
+
+        return {
+          success: true,
+          text: "OK! scrivimi l'id del corso che desideri seguire",
+        };
+      });
   }
 
   protected setFollowing(req: ChatRequest): Promise<Response> {
+    const courseId = parseInt(req.text);
+
+    if (!courseId) {
+      this.cleanChatState(req.chat);
+
+      return this.wrapResponseInPromise({
+        success: false,
+        text: "Id non valido",
+      });
+    }
+
+    const extraInfo = this.getChatExtraInfo(req.chat);
+    if (extraInfo["alreadyFollowing"].includes(courseId)) {
+      this.cleanChatState(req.chat);
+
+      return this.wrapResponseInPromise({
+        success: false,
+        text: "Stai già seguendo questo corso",
+      });
+    }
+
     //we create a record in the attendance table to link the student to the course
     return this.prisma.user
       .update({
@@ -65,7 +100,7 @@ export class FollowCommandHandler extends BaseCommandHandler {
         data: {
           attendance: {
             create: {
-              course: parseInt(req.text),
+              course: courseId,
             },
           },
         },

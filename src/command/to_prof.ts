@@ -137,8 +137,8 @@ export class ToProfCommandHandler extends BaseCommandHandler {
     chat.command_state = this.WAITING_FOR_MESSAGE_TYPE;
     chat.command_state_ordinal = 1;
 
-    let extraInfo = JSON.parse(chat.extra_info.toString());
-    extraInfo.to = profMail;
+    let extraInfo = this.getChatExtraInfo(chat);
+    extraInfo["to"] = profMail;
     chat.extra_info = extraInfo;
     this.updateChatState(chat);
 
@@ -180,8 +180,8 @@ export class ToProfCommandHandler extends BaseCommandHandler {
     req.chat.command_state = this.WAITING_FOR_MESSAGE;
     req.chat.command_state_ordinal++;
 
-    let extraInfo = JSON.parse(req.chat.extra_info.toString());
-    extraInfo.type = parseInt(req.data);
+    let extraInfo = this.getChatExtraInfo(req.chat);
+    extraInfo["type"] = parseInt(req.data);
     req.chat.extra_info = extraInfo;
     this.updateChatState(req.chat);
 
@@ -200,17 +200,17 @@ export class ToProfCommandHandler extends BaseCommandHandler {
     req.chat.command_state = this.WAITING_FOR_CONFIRMATION;
     req.chat.command_state_ordinal = 1;
 
-    let extraInfo = JSON.parse(req.chat.extra_info.toString());
-    extraInfo.messageText = req.text;
+    let extraInfo = this.getChatExtraInfo(req.chat);
+    extraInfo["messageText"] = req.text;
     //we save the id of the message to which the professor will replay
-    extraInfo.messageId = req.message_id;
+    extraInfo["messageId"] = req.message_id;
 
     req.chat.extra_info = extraInfo;
     this.updateChatState(req.chat);
 
     return renderFile(this.templates.confirm, {
       message: req.text,
-      profMail: req.chat.extra_info["to"],
+      profMail: extraInfo["to"],
     }).then((html) => {
       return {
         success: true,
@@ -238,16 +238,16 @@ export class ToProfCommandHandler extends BaseCommandHandler {
         */
     const res = parseInt(req.data);
     if (res === 1) {
-      let extraInfo = JSON.parse(req.chat.extra_info.toString());
+      let extraInfo = this.getChatExtraInfo(req.chat);
       return this.prisma.sent_messages
         .create({
           data: {
             from: req.user.email,
-            to: extraInfo.to,
-            type: extraInfo.type,
-            text: extraInfo.messageText,
+            to: extraInfo["to"],
+            type: extraInfo["type"],
+            text: extraInfo["messageText"],
             status: MessageStatus.sent,
-            message_id: extraInfo.messageId,
+            message_id: extraInfo["messageId"],
           },
         })
         .then((message) => {

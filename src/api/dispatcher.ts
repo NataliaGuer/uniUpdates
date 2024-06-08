@@ -27,7 +27,7 @@ export class Dispatcher {
           return this.prisma.chat.create({
             data: {
               id: req.chatId.toString(),
-              extra_info: "",
+              extra_info: {},
             },
           });
         } else {
@@ -70,7 +70,7 @@ export class Dispatcher {
 
           chatReq.chat.command = null;
           chatReq.chat.command_state = null;
-          chatReq.chat.extra_info = "";
+          chatReq.chat.extra_info = {};
         }
 
         return this.dispatchCommand(command, chat.id, chatReq);

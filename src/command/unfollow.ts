@@ -46,8 +46,8 @@ export class UnfollowCommandHandler extends BaseCommandHandler {
       .then((res) => {
         if (res) {
           let coursesId = res.map((att) => att.course);
-          let extraInfo = this.parseChatExtraInfo(req.chat);
-          extraInfo.selectable = coursesId;
+          let extraInfo = this.getChatExtraInfo(req.chat);
+          extraInfo["selectable"] = coursesId;
           req.chat.extra_info = extraInfo;
         }
         req.chat.command = UnfollowCommandHandler.command;
@@ -64,9 +64,16 @@ export class UnfollowCommandHandler extends BaseCommandHandler {
 
   protected removeFollow(req: ChatRequest): Promise<Response> {
     const selectedCourse = parseInt(req.text);
-    const extraInfo = this.parseChatExtraInfo(req.chat);
+    const extraInfo = this.getChatExtraInfo(req.chat);
 
-    if (!extraInfo.selectable.includes(selectedCourse)) {
+    if (!selectedCourse) {
+      return this.wrapResponseInPromise({
+        success: false,
+        text: "Id non valido",
+      });
+    }
+
+    if (!extraInfo["selectable"].includes(selectedCourse)) {
       this.cleanChatState(req.chat);
       return this.wrapResponseInPromise({
         success: false,

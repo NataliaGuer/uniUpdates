@@ -88,10 +88,19 @@ export class ReplayCommandHandler extends BaseCommandHandler {
   }
 
   protected requestMessageText(req: ChatRequest): Promise<Response> {
+    const messageId = parseInt(req.text);
+    if (!messageId) {
+      this.cleanChatState(req.chat);
+      return this.wrapResponseInPromise({
+        success: false,
+        text: "Id non valido, comando interrotto",
+      });
+    }
+
     return this.prisma.sent_messages
       .findUnique({
         where: {
-          id: parseInt(req.text),
+          id: messageId,
         },
         include: {
           fromUser: true,
@@ -150,8 +159,8 @@ export class ReplayCommandHandler extends BaseCommandHandler {
   }
 
   protected requestMessageConfirm(req: ChatRequest): Promise<Response> {
-    const extrainfo = JSON.parse(req.chat.extra_info.toString());
-    extrainfo.replay_body = req.text;
+    const extrainfo = this.getChatExtraInfo(req.chat);
+    extrainfo["replay_body"] = req.text;
 
     req.chat.command_state = this.WAITING_FOR_MESSAGE_CONFIRM;
     req.chat.command_state_ordinal = 0;
@@ -177,7 +186,7 @@ export class ReplayCommandHandler extends BaseCommandHandler {
 
   protected replayMessage(req: ChatRequest): Promise<Response | Response[]> {
     //req.data is "1" or "0"
-    const extraInfo = JSON.parse(req.chat.extra_info.toString());
+    const extraInfo = this.getChatExtraInfo(req.chat);
 
     if (req.data) {
       if (req.data === "0") {
@@ -192,7 +201,7 @@ export class ReplayCommandHandler extends BaseCommandHandler {
       return this.prisma.sent_messages
         .findUnique({
           where: {
-            id: parseInt(extraInfo.message_id),
+            id: parseInt(extraInfo["message_id"]),
           },
           include: {
             fromUser: true,
@@ -206,23 +215,24 @@ export class ReplayCommandHandler extends BaseCommandHandler {
             };
           }
 
-          return renderFile(this.templates.toStudent, { from: req.user.name, replay_body: extraInfo.replay_body }).then(
-            (html) => {
-              let toStudent: Response = {
-                success: true,
-                text: html,
-                parseMode: "HTML",
-                toChat: parseInt(message.fromUser.chat_id),
-                replayToMessage: message.message_id,
-              };
+          return renderFile(this.templates.toStudent, {
+            from: req.user.name,
+            replay_body: extraInfo["replay_body"],
+          }).then((html) => {
+            let toStudent: Response = {
+              success: true,
+              text: html,
+              parseMode: "HTML",
+              toChat: parseInt(message.fromUser.chat_id),
+              replayToMessage: message.message_id,
+            };
 
-              let toProf: Response = {
-                success: true,
-                text: "Messaggio inviato con successo",
-              };
-              return [toStudent, toProf];
-            }
-          );
+            let toProf: Response = {
+              success: true,
+              text: "Messaggio inviato con successo",
+            };
+            return [toStudent, toProf];
+          });
         });
     }
 

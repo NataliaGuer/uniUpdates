@@ -139,11 +139,11 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
   protected checkEmailConfirmation(req: AuthenticationRequest): Promise<Response> {
     if (req.data) {
       if (req.data === "1") {
-        const extrainfo = JSON.parse(req.chat.extra_info.toString());
-        const token = this.sendToken(extrainfo.emailToConfirm);
+        const extrainfo = this.getChatExtraInfo(req.chat);
+        const token = this.sendToken(extrainfo["emailToConfirm"]);
 
         //the generated and sent token is saved for future check
-        extrainfo.token = token;
+        extrainfo["token"] = token;
         req.chat.command_state = this.WAITING_FOR_TOKEN;
         req.chat.command_state_ordinal = 1;
         req.chat.extra_info = extrainfo;
@@ -167,16 +167,16 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
   }
 
   protected checkToken(req: AuthenticationRequest): Promise<Response> {
-    const extraInfo = JSON.parse(req.chat.extra_info.toString());
+    const extraInfo = this.getChatExtraInfo(req.chat);
 
     //we check the correctness of the submitted token
-    if (extraInfo.token && req.text === extraInfo.token) {
+    if (extraInfo["token"] && req.text === extraInfo["token"]) {
       //user update, now we have a link between the user and the chat she/he is using
       //to talk with the bot
       this.prisma.user
         .update({
           where: {
-            email: extraInfo.emailToConfirm,
+            email: extraInfo["emailToConfirm"],
           },
           data: {
             chat_id: req.chat.id,
@@ -184,7 +184,7 @@ export class AuthenticateCommandHandler extends BaseCommandHandler {
         })
         .then((res) => {});
 
-      req.chat.token = extraInfo.token;
+      req.chat.token = extraInfo["token"];
       req.chat.command = null;
       req.chat.command_state = this.INITIAL_STATE;
       req.chat.command_state_ordinal = 0;

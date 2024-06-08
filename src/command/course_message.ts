@@ -103,6 +103,13 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
 
   protected requestMessageBody(req: ChatRequest): Promise<Response> {
     const courseId = parseInt(req.data);
+    if (!courseId) {
+      this.cleanChatState(req.chat);
+      return this.wrapResponseInPromise({
+        success: false,
+        text: "Id corso non valido, comando interrotto",
+      });
+    }
 
     return this.prisma.course
       .findUnique({
@@ -128,8 +135,8 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
   }
 
   protected requestConfirm(req: ChatRequest): Promise<Response> {
-    let extraInfo = JSON.parse(req.chat.extra_info.toString());
-    extraInfo.messageBody = req.text;
+    let extraInfo = this.getChatExtraInfo(req.chat);
+    extraInfo["messageBody"] = req.text;
 
     req.chat.command_state = this.WAITING_FOR_CONFIRM;
     req.chat.extra_info = extraInfo;
@@ -156,7 +163,7 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
 
   protected getMessages(req: ChatRequest): Promise<Response | Response[]> {
     const confirm = parseInt(req.data);
-    const extraInfo = JSON.parse(req.chat.extra_info.toString());
+    const extraInfo = this.getChatExtraInfo(req.chat);
     if (!confirm) {
       this.cleanChatState(req.chat);
       return this.wrapResponseInPromise({
@@ -168,7 +175,7 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
     return this.prisma.attendance
       .findMany({
         where: {
-          course: extraInfo.courseId,
+          course: extraInfo["courseId"],
         },
         include: {
           attendace_student: true,
@@ -186,7 +193,7 @@ export class CourseMessageCommandHandler extends BaseCommandHandler {
         let responses = attendaces.map((attendance) => {
           let res: Response = {
             success: true,
-            text: `📙Nuovo messaggio dal corso <b>${extraInfo.courseName}</b>:\n<i>${extraInfo.messageBody}</i>`,
+            text: `📙Nuovo messaggio dal corso <b>${extraInfo["courseName"]}</b>:\n<i>${extraInfo["messageBody"]}</i>`,
             parseMode: "HTML",
             toChat: parseInt(attendance.attendace_student.chat_id),
           };

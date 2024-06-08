@@ -33,14 +33,14 @@ export abstract class BaseCommandHandler {
           command: newChat.command,
           command_state: newChat.command_state,
           command_state_ordinal: newChat.command_state_ordinal,
-          extra_info: JSON.stringify(newChat.extra_info),
+          extra_info: newChat.extra_info,
         },
       })
       .then((res) => {});
   }
 
-  protected parseChatExtraInfo(chat: chat) {
-    return JSON.parse(chat.extra_info.toString());
+  protected getChatExtraInfo(chat: chat) {
+    return chat.extra_info ?? {};
   }
 
   /**
@@ -58,7 +58,7 @@ export abstract class BaseCommandHandler {
           command: null,
           command_state: this.INITIAL_STATE,
           command_state_ordinal: 0,
-          extra_info: JSON.stringify({}),
+          extra_info: null,
         },
       })
       .then((res) => {});

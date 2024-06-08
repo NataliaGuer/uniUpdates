@@ -64,7 +64,14 @@ export class CourseInfoCommandHandler extends BaseCommandHandler {
   }
 
   protected getCourseInfo(req: ChatRequest): Promise<Response> {
-    this.cleanChatState(req.chat);
+    const courseId = parseInt(req.text);
+
+    if (!courseId) {
+      return this.wrapResponseInPromise({
+        success: false,
+        text: "Id non valido",
+      });
+    }
 
     return this.prisma.course
       .findUnique({
@@ -118,6 +125,9 @@ export class CourseInfoCommandHandler extends BaseCommandHandler {
             parseMode: "HTML",
           };
         });
+      })
+      .finally(() => {
+        this.cleanChatState(req.chat);
       });
   }
 }

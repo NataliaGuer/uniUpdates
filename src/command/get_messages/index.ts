@@ -159,8 +159,17 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
   }
 
   protected handleFilter(req: ChatRequest): Promise<Response> {
-    const chatExtraInfo = JSON.parse(req.chat.extra_info.toString());
-    chatExtraInfo.filterApplied = req.data;
+    const chatExtraInfo = this.getChatExtraInfo(req.chat);
+
+    if (!req.data) {
+      this.cleanChatState(req.chat);
+      return this.wrapResponseInPromise({
+        success: false,
+        text: "Filtro non valido, comando interrotto",
+      });
+    }
+
+    chatExtraInfo["filterApplied"] = req.data;
 
     req.chat.command_state = this.WAITING_FOR_FILTER_INFO;
     req.chat.extra_info = chatExtraInfo;
@@ -180,7 +189,7 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
     //the user selected "no filter option" so we return all the messages
     const allMessages = this.prisma.sent_messages.findMany({
       where: {
-        status: parseInt(chatExtraInfo.selectedStatus),
+        status: parseInt(chatExtraInfo["selectedStatus"]),
       },
       include: {
         fromUser: true,
@@ -193,7 +202,7 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
     this.cleanChatState(req.chat);
 
     return allMessages.then((all) => {
-      if (parseInt(chatExtraInfo.selectedStatus) === MessageStatus.sent) {
+      if (parseInt(chatExtraInfo["selectedStatus"]) === MessageStatus.sent) {
         this.setAsRead(all);
       }
       return this.createMessagesResponse(all);
@@ -205,13 +214,13 @@ export class GetMessagesCommandHandler extends BaseCommandHandler {
     //the filter take all the request and, depending on what it presented previously to the
     //user, extracts the desired data from it
     //the filter key is in chat.extradata
-    let chatExtraInfo = JSON.parse(req.chat.extra_info.toString());
-    const filterHandler = this.getFilterHandler(chatExtraInfo.filterApplied);
+    let chatExtraInfo = this.getChatExtraInfo(req.chat);
+    const filterHandler = this.getFilterHandler(chatExtraInfo["filterApplied"]);
 
     let res: Promise<Response>;
     if (filterHandler) {
-      res = filterHandler.handleValue(req, parseInt(chatExtraInfo.selectedStatus)).then((messages) => {
-        if (parseInt(chatExtraInfo.selectedStatus) === MessageStatus.sent) {
+      res = filterHandler.handleValue(req, parseInt(chatExtraInfo["selectedStatus"])).then((messages) => {
+        if (parseInt(chatExtraInfo["selectedStatus"]) === MessageStatus.sent) {
           this.setAsRead(messages);
         }
         this.setAsRead(messages);
